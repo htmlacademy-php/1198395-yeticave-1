@@ -1,7 +1,7 @@
 # Личный проект «YetiCave»
 
-* Студент: [Борис Глинский](https://up.htmlacademy.ru/php-individual/1/user/1198395).
-* Наставник: `Неизвестно`.
+- Студент: [Борис Глинский](https://up.htmlacademy.ru/php-individual/1/user/1198395).
+- Наставник: [Сергей Парфенов](https://github.com/sergeivl).
 
 ---
 
