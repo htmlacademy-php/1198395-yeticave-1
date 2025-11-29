@@ -126,7 +126,8 @@ function getNounPluralForm (int $number, string $one, string $two, string $many)
  * @param array $data Ассоциативный массив с данными для шаблона
  * @return string Итоговый HTML
  */
-function includeTemplate($name, array $data = []) {
+function includeTemplate(string $name, array $data = []) : string
+{
     $name = 'templates/' . $name;
     $result = '';
 
@@ -148,7 +149,12 @@ function includeTemplate($name, array $data = []) {
  * @param int $price Цена товара в целочисленном формате
  * @return string Отформатированная цена
  */
-function formatPrice(int $price): string {
-    return ($price > 1000 ? number_format($price, 0, '', ' ') : $price)
+function formatPrice(int $price): string
+{
+    return (
+        $price > 1000
+            ? number_format($price, 0, '', ' ')
+            : $price
+        )
         . '<b class="rub">р</b>';
 }
