@@ -1,13 +1,15 @@
 <?php
-require_once __DIR__ . '/helpers.php';
-
-/**
- * @var $includeTemplate;
- */
 
 ini_set('display_errors', '1');
 ini_set('display_startup_errors', '1');
 error_reporting(E_ALL);
+
+require_once __DIR__ . '/helpers.php';
+
+/**
+ * @var $includeTemplate ;
+ */
+
 
 $isAuth = rand(0, 1);
 
@@ -46,21 +48,21 @@ $products = [
         'category' => 'Доски и лыжи',
         'price' => 10999,
         'imgUrl' => '/img/lot-1.jpg',
-        'expireDate' => '2026-02-01'
+        'expireDate' => '2027-02-01'
     ],
     [
         'name' => 'DC Ply Mens 2016/2017 Snowboard',
         'category' => 'Доски и лыжи',
         'price' => 159999,
         'imgUrl' => '/img/lot-2.jpg',
-        'expireDate' => '2025-12-31'
+        'expireDate' => '2025-12-14'
     ],
     [
         'name' => 'Крепления Union Contact Pro 2015 года размер L/XL',
         'category' => 'Крепления',
         'price' => 8000,
         'imgUrl' => '/img/lot-3.jpg',
-        'expireDate' => '2025-12-31'
+        'expireDate' => '2023-12-31'
     ],
     [
         'name' => 'Ботинки для сноуборда DC Mutiny Charcoal',
@@ -74,7 +76,7 @@ $products = [
         'category' => 'Одежда',
         'price' => 7500,
         'imgUrl' => '/img/lot-5.jpg',
-        'expireDate' => '2025-12-14'
+        'expireDate' => '2025-12-15'
     ],
     [
         'name' => 'Маска Oakley Canopy',
@@ -89,7 +91,8 @@ $pageContent = includeTemplate(
     [
         'products' => $products,
         'cats' => $cats
-    ]);
+    ]
+);
 
 $layoutContent = includeTemplate(
     'layout.php',
@@ -98,7 +101,8 @@ $layoutContent = includeTemplate(
         'pageContent' => $pageContent,
         'userName' => $userName,
         'pageTitle' => 'Главная страница',
-        'isAuth' => $isAuth]
+        'isAuth' => $isAuth
+    ]
 );
 
 print($layoutContent);
