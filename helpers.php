@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Проверяет переданную дату на соответствие формату 'ГГГГ-ММ-ДД'
  *
@@ -13,7 +14,8 @@
  *
  * @return bool true при совпадении с форматом 'ГГГГ-ММ-ДД', иначе false
  */
-function isDateValid(string $date) : bool {
+function isDateValid(string $date): bool
+{
     $format_to_check = 'Y-m-d';
     $dateTimeObj = date_create_from_format($format_to_check, $date);
 
@@ -29,7 +31,8 @@ function isDateValid(string $date) : bool {
  *
  * @return mysqli_stmt Подготовленное выражение
  */
-function dbGetPrepareStmt($link, $sql, $data = []) {
+function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_stmt
+{
     $stmt = mysqli_prepare($link, $sql);
 
     if ($stmt === false) {
@@ -46,18 +49,14 @@ function dbGetPrepareStmt($link, $sql, $data = []) {
 
             if (is_int($value)) {
                 $type = 'i';
-            }
-            else if (is_string($value)) {
-                $type = 's';
-            }
-            else if (is_double($value)) {
-                $type = 'd';
+            } else {
+                if (is_double($value)) {
+                    $type = 'd';
+                }
             }
 
-            if ($type) {
-                $types .= $type;
-                $stmt_data[] = $value;
-            }
+            $types .= $type;
+            $stmt_data[] = $value;
         }
 
         $values = array_merge([$stmt, $types], $stmt_data);
@@ -94,30 +93,19 @@ function dbGetPrepareStmt($link, $sql, $data = []) {
  * @param string $two Форма множественного числа для 2, 3, 4: яблока, часа, минуты
  * @param string $many Форма множественного числа для остальных чисел
  *
- * @return string Рассчитанная форма множественнго числа
+ * @return string Рассчитанная форма множественного числа
  */
-function getNounPluralForm (int $number, string $one, string $two, string $many): string
+function getNounPluralForm(int $number, string $one, string $two, string $many): string
 {
-    $number = (int) $number;
+    $number = abs($number);
     $mod10 = $number % 10;
     $mod100 = $number % 100;
 
-    switch (true) {
-        case ($mod100 >= 11 && $mod100 <= 20):
-            return $many;
-
-        case ($mod10 > 5):
-            return $many;
-
-        case ($mod10 === 1):
-            return $one;
-
-        case ($mod10 >= 2 && $mod10 <= 4):
-            return $two;
-
-        default:
-            return $many;
-    }
+    return match (true) {
+        $mod100 >= 11 && $mod100 <= 20, $mod10 > 5, $mod10 == 0 => $many,
+        $mod10 === 1 => $one,
+        $mod10 >= 2 && $mod10 <= 4 => $two
+    };
 }
 
 /**
@@ -126,7 +114,7 @@ function getNounPluralForm (int $number, string $one, string $two, string $many)
  * @param array $data Ассоциативный массив с данными для шаблона
  * @return string Итоговый HTML
  */
-function includeTemplate(string $name, array $data = []) : string
+function includeTemplate(string $name, array $data = []): string
 {
     $name = 'templates/' . $name;
     $result = '';
@@ -139,9 +127,7 @@ function includeTemplate(string $name, array $data = []) : string
     extract($data);
     require $name;
 
-    $result = ob_get_clean();
-
-    return $result;
+    return ob_get_clean();
 }
 
 /**
@@ -162,15 +148,27 @@ function formatPrice(int $price): string
 /**
  * Принимает будущую дату и вычисляет, сколько осталось целых часов и минут до этой даты от текущей
  * @param string $date Будущая дата в строковом формате (ГГГГ-ММ-ДД)
- * @return array Массив, в котором первый элемент - часы, второй - минуты
+ * @return string[] Массив, в котором первый элемент - часы, второй - минуты
  */
-function getDtRange (string $date) : array
+function getDtRange(string $date): array
 {
-    $currentDate = date_create("now");
-    $endDate = date_create($date);
+    $currentDate = date_create();
+
+    try {
+        $endDate = date_create($date);
+    } catch (Throwable $e) {
+        error_log($e->getMessage());
+        return ['00', '00'];
+    }
+
+    if ($currentDate > $endDate) {
+        return ['00', '00'];
+    }
+
     $dateDiff = date_diff($currentDate, $endDate);
 
-    $resultHours = str_pad($dateDiff->h, 2, '0', STR_PAD_LEFT);
+    $resultHours = $dateDiff->days * 24 + $dateDiff->h;
+    $resultHours = str_pad($resultHours, 2, '0', STR_PAD_LEFT);
 
     $minutesLeft = str_pad($dateDiff->i, 2, '0', STR_PAD_LEFT);
 
