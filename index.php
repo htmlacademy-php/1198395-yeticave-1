@@ -10,86 +10,37 @@ require_once __DIR__ . '/helpers.php';
  * @var $includeTemplate ;
  */
 
+$connection = mysqli_connect('mysql', 'root', '', 'yeticave');
+if (!$connection) {
+    printf('Ошибка подключения к БД: %s', mysqli_connect_error());
+    die();
+}
+
+if (!mysqli_set_charset($connection, 'utf8mb4')) {
+    printf('Ошибка установки Юникода : %s', mysqli_connect_error());
+    die();
+};
+
+$lotsSql = 'SELECT lots.*, cats.name AS category '
+        . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
+        . 'ORDER BY lots.created_at DESC LIMIT 6';
+
+$lotsResult = mysqli_query($connection, $lotsSql);
+$lots = mysqli_fetch_all($lotsResult, MYSQLI_ASSOC);
+
+$catsSql = 'SELECT * FROM cats';
+
+$catsResult = mysqli_query($connection, $catsSql);
+$cats = mysqli_fetch_all($catsResult, MYSQLI_ASSOC);
+
 $isAuth = rand(0, 1);
 
 $userName = 'Борис'; // укажите здесь ваше имя
 
-$cats = [
-    [
-        'category' => 'Доски и лыжи',
-        'cssClass' => 'promo__item--boards'
-    ],
-    [
-        'category' => 'Крепления',
-        'cssClass' => 'promo__item--attachment'
-    ],
-    [
-        'category' => 'Ботинки',
-        'cssClass' => 'promo__item--boots'
-    ],
-    [
-        'category' => 'Одежда',
-        'cssClass' => 'promo__item--clothing'
-    ],
-    [
-        'category' => 'Инструменты',
-        'cssClass' => 'promo__item--tools'
-    ],
-    [
-        'category' => 'Разное',
-        'cssClass' => 'promo__item--other'
-    ]
-];
-
-$products = [
-    [
-        'name' => '2014 Rossignol District Snowboard',
-        'category' => 'Доски и лыжи',
-        'price' => 10999,
-        'imgUrl' => '/img/lot-1.jpg',
-        'expireDate' => '2027-02-01'
-    ],
-    [
-        'name' => 'DC Ply Mens 2016/2017 Snowboard',
-        'category' => 'Доски и лыжи',
-        'price' => 159999,
-        'imgUrl' => '/img/lot-2.jpg',
-        'expireDate' => '2025-12-14'
-    ],
-    [
-        'name' => 'Крепления Union Contact Pro 2015 года размер L/XL',
-        'category' => 'Крепления',
-        'price' => 8000,
-        'imgUrl' => '/img/lot-3.jpg',
-        'expireDate' => '2023-12-31'
-    ],
-    [
-        'name' => 'Ботинки для сноуборда DC Mutiny Charcoal',
-        'category' => 'Ботинки',
-        'price' => 10999,
-        'imgUrl' => '/img/lot-4.jpg',
-        'expireDate' => '2025-12-31'
-    ],
-    [
-        'name' => 'Куртка для сноуборда DC Mutiny Charcoal',
-        'category' => 'Одежда',
-        'price' => 7500,
-        'imgUrl' => '/img/lot-5.jpg',
-        'expireDate' => '2025-12-15'
-    ],
-    [
-        'name' => 'Маска Oakley Canopy',
-        'category' => 'Разное',
-        'price' => 5400,
-        'imgUrl' => '/img/lot-6.jpg',
-        'expireDate' => '2025-12-01'
-    ],
-];
-
 $pageContent = includeTemplate(
     'main.php',
     [
-        'products' => $products,
+        'lots' => $lots,
         'cats' => $cats
     ]
 );
