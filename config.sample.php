@@ -1,8 +1,12 @@
 <?php
 
 return [
-    'host' => '',
-    'user' => '',
+    'db' =>
+    [
+    'host' => 'localhost',
+    'user' => 'root',
     'password' => '',
-    'database' => ''
+    'database' => 'yeticave'
+    ],
+    'mailer' => []
 ];

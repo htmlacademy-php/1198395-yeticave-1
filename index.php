@@ -3,21 +3,24 @@
 require_once __DIR__ . '/init.php';
 
 /**
- * @var $includeTemplate ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $createConnection ;
- * @var $setUnicode ;
- * @var $getData ;
- * @var $queryGetRecentLots ;
- * @var $queryGetCategories ;
- * @var $config ;
+ * @var $getRecentLots ;
+ * @var $getAllCats ;
+ * @var $includeTemplate ;
  */
 
-$connection = createConnection($config);
-setUnicode($connection);
-$lots = getData($connection, $queryGetRecentLots);
-$cats = getData($connection, $queryGetCategories);
+$isAuth = rand(0, 1);
+
+$userName = 'Борис'; // укажите здесь ваше имя
+
+if (!file_exists(__DIR__ . '/config.php')) {
+    exit('Файл конфигурации отсутствует.');
+}
+$config = require __DIR__ . '/config.php';
+
+$connection = createConnection($config['db']);
+$lots = getRecentLots($connection);
+$cats = getAllCats($connection);
 
 $pageContent = includeTemplate(
     'main.php',
@@ -33,7 +36,7 @@ $layoutContent = includeTemplate(
         'cats' => $cats,
         'pageContent' => $pageContent,
         'userName' => $userName,
-        'pageTitle' => 'Главная страница',
+        'pageTitle' => '"Yeticave" - Главная страница',
         'isAuth' => $isAuth
     ]
 );
