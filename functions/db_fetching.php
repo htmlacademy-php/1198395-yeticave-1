@@ -3,6 +3,7 @@
 /**
  * Создаёт соединение с БД. Завершает работу сценария, если возникает ошибка соединения к БД.
  * @param array $config Массив с настройками БД.
+ *
  * @return mysqli Готовое соединение.
  */
 function createConnection(array $config): mysqli
@@ -28,6 +29,7 @@ function createConnection(array $config): mysqli
 /**
  * Устанавливает юникод 'utf8mb4'. Завершает сценарий при ошибке.
  * @param mysqli $connection Готовое соединение.
+ *
  * @return void
  */
 function setUnicode(mysqli $connection): void
@@ -41,9 +43,10 @@ function setUnicode(mysqli $connection): void
 /**
  * Получает список 6 недавно добавленных лотов.
  * @param mysqli $connection Готовое соединение.
+ *
  * @return array Массив с лотами.
  */
-function getRecentLots($connection): array
+function getRecentLots(mysqli $connection): array
 {
     $query = 'SELECT lots.*, cats.name AS category '
     . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
@@ -55,9 +58,10 @@ function getRecentLots($connection): array
 /**
  * Получает список всех категорий.
  * @param mysqli $connection Готовое соединение.
+ *
  * @return array Массив с категориями.
  */
-function getAllCats($connection): array
+function getAllCats(mysqli $connection): array
 {
     $query = 'SELECT * FROM cats';
 
@@ -68,6 +72,7 @@ function getAllCats($connection): array
  * Получает данные из БД и возвращает их в виде многомерного массива. Завершает сценарий при ошибке.
  * @param mysqli $connection Готовое соединение.
  * @param string $query Запрос к БД.
+ *
  * @return array Данные из БД в виде массива.
  */
 function getData(mysqli $connection, string $query): array
@@ -78,4 +83,73 @@ function getData(mysqli $connection, string $query): array
     }
 
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
+}
+
+/**
+ * Получает данные об одном лоте по его id и возвращает их в виде массива. Завершает сценарий при ошибке.
+ * @param mysqli $connection Готовое соединение.
+ * @param int $id Id лота.
+ *
+ * @return array Данные из БД в виде массива.
+ */
+function getLotById(mysqli $connection, int $id): array
+{
+    $query = 'SELECT lots.*, cats.name, MAX(bids.amount) '
+            . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
+            . 'LEFT JOIN bids ON lots.id = bids.lot_id '
+            . 'WHERE lots.id = ' . $id . ' '
+            . 'GROUP BY bids.amount, lots.id';
+
+    return getData($connection, $query);
+}
+
+/**
+ * Создает подготовленное выражение на основе готового SQL запроса и переданных данных
+ *
+ * @param $link mysqli Ресурс соединения
+ * @param $sql string SQL запрос с плейсхолдерами вместо значений
+ * @param array $data Данные для вставки на место плейсхолдеров
+ *
+ * @return mysqli_stmt Подготовленное выражение
+ */
+function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_stmt
+{
+    $stmt = mysqli_prepare($link, $sql);
+
+    if ($stmt === false) {
+        $errorMsg = 'Не удалось инициализировать подготовленное выражение: ' . mysqli_error($link);
+        die($errorMsg);
+    }
+
+    if ($data) {
+        $types = '';
+        $stmt_data = [];
+
+        foreach ($data as $value) {
+            $type = 's';
+
+            if (is_int($value)) {
+                $type = 'i';
+            } else {
+                if (is_double($value)) {
+                    $type = 'd';
+                }
+            }
+
+            $types .= $type;
+            $stmt_data[] = $value;
+        }
+
+        $values = array_merge([$stmt, $types], $stmt_data);
+
+        $func = 'mysqli_stmt_bind_param';
+        $func(...$values);
+
+        if (mysqli_errno($link) > 0) {
+            $errorMsg = 'Не удалось связать подготовленное выражение с параметрами: ' . mysqli_error($link);
+            die($errorMsg);
+        }
+    }
+
+    return $stmt;
 }
