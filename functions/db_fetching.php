@@ -50,6 +50,7 @@ function getRecentLots(mysqli $connection): array
 {
     $query = 'SELECT lots.*, cats.name AS category '
         . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
+        . 'WHERE lots.date_exp > CURDATE() '
         . 'ORDER BY lots.created_at DESC LIMIT 6';
 
     return getData($connection, $query);

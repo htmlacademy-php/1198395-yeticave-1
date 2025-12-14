@@ -6,3 +6,4 @@ error_reporting(E_ALL);
 
 require_once __DIR__ . '/functions/helpers.php';
 require_once __DIR__ . '/functions/db_fetching.php';
+require_once __DIR__ . '/functions/form_validators.php';
