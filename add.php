@@ -3,67 +3,70 @@
 require_once __DIR__ . '/init.php';
 
 /**
- * @var $createConnection ;
+ * @var $connection ;
+ * @var $isAuth ;
+ * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $dbGetPrepareStmt ;
- * @var $handleInputErrors ;
+ * @var $validateFormAddLot ;
  */
 
-$isAuth = rand(0, 1);
-
-$userName = 'Борис'; // укажите здесь ваше имя
-
-if (!file_exists(__DIR__ . '/config.php')) {
-    exit('Файл конфигурации отсутствует.');
-}
-$config = require __DIR__ . '/config.php';
-
-$connection = createConnection($config['db']);
 $cats = getAllCats($connection);
+
+$navContent = includeTemplate(
+    'nav.php',
+    [
+        'cats' => $cats
+    ]
+);
 
 $pageContent = includeTemplate(
     'add.php',
     [
-        'cats' => $cats,
+        'navContent' => $navContent,
+        'cats' => $cats
     ]
 );
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
 
-    $errors = handleInputErrors($formInputs, $cats);
+    $errors = validateFormAddLot($formInputs, $cats);
 
-    validateFile('lot-img', $errors, $formInputs);
-
-    $errors = array_filter($errors);
+    if (empty($errors)) { // Не пытаемся обработать файл, если в форме есть другие ошибки
+        $uploadStatus = uploadImg('lot-img');
+        $uploadStatus['success']
+            ? $formInputs['lot-img'] = $uploadStatus['imgPath']
+            : $errors['lot-img'] = $uploadStatus['error'];
+    }
 
     if (!empty($errors)) {
         $pageContent = includeTemplate(
             'add.php',
             [
+                'navContent' => $navContent,
                 'formInputs' => $formInputs,
                 'cats' => $cats,
                 'errors' => $errors
             ]
         );
     } else {
-        $sql = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, 1)';
-        $stmt = dbGetPrepareStmt($connection, $sql, $formInputs);
-        $result = mysqli_stmt_execute($stmt);
+        $lotId = addLot($connection, $formInputs);
 
-        if ($result) {
-            $lot_id = mysqli_insert_id($connection);
-
-            header('Location:lot.php?id=' . $lot_id);
+        if ($lotId === false) {
+            error_log(mysqli_error($connection));
+            exit('Не удалось отправить данные на сервер.');
         }
+
+        header('Location:lot.php?id=' . $lotId);
+        exit();
     }
 }
 
 $layoutContent = includeTemplate(
     'layout.php',
     [
-        'cats' => $cats,
+        'navContent' => $navContent,
         'pageContent' => $pageContent,
         'userName' => $userName,
         'pageTitle' => '"Yeticave" - Добавление лота',

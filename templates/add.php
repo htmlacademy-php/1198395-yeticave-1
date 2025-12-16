@@ -1,5 +1,6 @@
 <?php
 /**
+ * @var $navContent ;
  * @var $cats ;
  * @var $errors ;
  * @var $formInputs ;
@@ -7,15 +8,7 @@
 
 ?>
 <main>
-    <nav class="nav">
-        <ul class="nav__list container">
-            <?php foreach ($cats as $cat) : ?>
-                <li class="nav__item">
-                    <a href="/index.php"><?= $cat['name']; ?></a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </nav>
+    <?= $navContent ?>
     <form class="form form--add-lot container <?= empty($errors) ? '' : 'form--invalid' ?>" action="/add.php" method="post" enctype="multipart/form-data">
         <h2>Добавление лота</h2>
         <div class="form__container-two">
@@ -45,7 +38,7 @@
         <div class="form__item form__item--file <?= isset($errors['lot-img']) ? 'form__item--invalid' : '' ?>">
             <label>Изображение <sup>*</sup></label>
             <div class="form__input-file">
-                <input class="visually-hidden" name="lot-img" type="file" id="lot-img" value="<?= $formInputs['lot-img'] ?? '' ?>">
+                <input class="visually-hidden" name="lot-img" type="file" id="lot-img" value="">
                 <label for="lot-img">
                     Добавить
                 </label>

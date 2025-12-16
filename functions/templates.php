@@ -46,7 +46,7 @@ function getNounPluralForm(int $number, string $one, string $two, string $many):
  *
  * @return string Прошедшее время с указанной даты
  */
-function handleTimePassedAfterDate(string $date, DateTime $currentDate): string
+function getTimePassedAfterDate(string $date, DateTime $currentDate): string
 {
     try {
         $createdAt = date_create($date);

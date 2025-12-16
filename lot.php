@@ -3,25 +3,24 @@
 require_once __DIR__ . '/init.php';
 
 /**
- * @var $createConnection ;
+ * @var $connection ;
+ * @var $isAuth ;
+ * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $getBidsByLotId ;
  */
 
-$isAuth = rand(0, 1);
-
-$userName = 'Борис'; // укажите здесь ваше имя
-
-if (!file_exists(__DIR__ . '/config.php')) {
-    exit('Файл конфигурации отсутствует.');
-}
-$config = require __DIR__ . '/config.php';
-
-$connection = createConnection($config['db']);
 $cats = getAllCats($connection);
 $lotId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $pageTitle = '';
+
+$navContent = includeTemplate(
+    'nav.php',
+    [
+        'cats' => $cats
+    ]
+);
 
 if (!$lotId || !$lot = getLotById($connection, $lotId)) {
     $pageTitle = 'Страницы не существует';
@@ -29,11 +28,13 @@ if (!$lotId || !$lot = getLotById($connection, $lotId)) {
     $pageContent = includeTemplate(
         '404.php',
         [
-            'cats' => $cats
+            'navContent' => $navContent
         ]
     );
+    http_response_code(404);
+
 } else {
-    $bids = getBidsByLotId($connection, $lotId);
+    $bids = getBidsByLot($connection, $lotId);
     $pageTitle = $lot['name'];
 
     $pageContent = includeTemplate(
@@ -41,7 +42,7 @@ if (!$lotId || !$lot = getLotById($connection, $lotId)) {
         [
             'lot' => $lot,
             'bids' => $bids,
-            'cats' => $cats
+            'navContent' => $navContent
         ]
     );
 }
@@ -49,7 +50,7 @@ if (!$lotId || !$lot = getLotById($connection, $lotId)) {
 $layoutContent = includeTemplate(
     'layout.php',
     [
-        'cats' => $cats,
+        'navContent' => $navContent,
         'pageContent' => $pageContent,
         'userName' => $userName,
         'pageTitle' => '"Yeticave" - ' . $pageTitle,

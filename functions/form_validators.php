@@ -7,9 +7,8 @@
  *
  * @return array Массив выявленных ошибок в форме.
  */
-function handleInputErrors(array $formInputs, array $cats): array
+function validateFormAddLot(array $formInputs, array $cats): array
 {
-    $errors = [];
     $rules =
         [
             'lot-name' => function ($value) {
@@ -32,6 +31,19 @@ function handleInputErrors(array $formInputs, array $cats): array
             }
         ];
 
+    return validateForm($formInputs, $rules);
+}
+
+/**
+ * Принимает данные формы и словарь с правилами-валидаторами для нее. Применяет для каждого поля свой валидатор и собирает ошибки в массив.
+ * @param array $formInputs Массив данных из формы.
+ * @param array $rules Словарь с правилами-валидаторами (ключ = имя поля формы, значение - функция-валидатор).
+ * @return array Массив выявленных ошибок в форме.
+ */
+function validateForm(array $formInputs, array $rules): array
+{
+    $errors = [];
+
     foreach ($formInputs as $key => $value) {
         if (isset($rules[$key])) {
             $ruleFunc = $rules[$key];
@@ -39,21 +51,21 @@ function handleInputErrors(array $formInputs, array $cats): array
         }
     }
 
-    return $errors;
+    return array_filter($errors);
 }
 
 /**
- * Проверяет файл, который пользователь добавил в форму. При успешной валидации загружает файл на сервер,
- * при неуспешной - добавляет запись в массив ошибок.
+ * Проверяет файл, который пользователь добавил в форму. При успешной валидации загружает файл на сервер и возвращает путь к файлу на сервере,
+ * при неуспешной - возвращает сообщение ошибки.
  * @param string $filename Имя файла в системе пользователя.
- * @param array &$errors Ссылка на массив существующих ошибок.
- * @param array &$formInputs Ссылка на введенные пользователем данные. Нужны, чтобы добавить в них путь к файлу при
- * успешной валидации.
  *
- * @return void
+ * @return array Массив, состоящий из статуса загрузки файла, сообщения об ошибке и пути к файлу на сервере.
  */
-function validateFile(string $filename, array &$errors, array &$formInputs): void
+function uploadImg(string $filename): array
 {
+    $error = '';
+    $imgPath = '';
+
     if (!empty($_FILES[$filename]['tmp_name'])) {
         $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
         $fileTempName = $_FILES[$filename]['tmp_name'];
@@ -61,20 +73,33 @@ function validateFile(string $filename, array &$errors, array &$formInputs): voi
 
         $fileType = finfo_file($fileInfo, $fileTempName);
 
-        $acceptedTypes = ['image/jpeg', 'image/png'];
+        $acceptedTypes =
+        [
+            'image/jpeg' => '.jpg',
+            'image/png' => '.png'
+        ];
 
-        if (!in_array($fileType, $acceptedTypes)) {
-            $errors[$filename] = 'Загрузите картинку в формате "jpeg" или "png".';
+        if (!isset($acceptedTypes[$fileType])) {
+            $error = 'Загрузите картинку в формате "jpeg" или "png".';
         } elseif ($fileSize > 2000000) {
-            $errors[$filename] = 'Максимальный размер файла: 2МБ.';
+            $error = 'Максимальный размер файла: 2МБ.';
         } else {
-            $fileName = 'uploads/' . uniqid() . '.jpeg';
-            move_uploaded_file($fileTempName, $fileName);
-            $formInputs[$filename] = $fileName;
+            $fileType = $acceptedTypes[$fileType];
+            $filePath = 'uploads/' . uniqid() . $fileType;
+
+            move_uploaded_file($fileTempName, $filePath)
+                ? $imgPath = '/' . $filePath
+                : $error = 'Ошибка при загрузке файла.';
         }
     } else {
-        $errors[$filename] = 'Загрузите картинку в формате "jpeg" или "png".';
+        $error = 'Загрузите картинку в формате "jpeg" или "png".';
     }
+
+    return [
+        'success' => empty($error) && !empty($imgPath),
+        'error' => $error,
+        'imgPath' => $imgPath
+    ];
 }
 
 /**
@@ -87,7 +112,7 @@ function validateFile(string $filename, array &$errors, array &$formInputs): voi
  */
 function validateTextLength(string $text, int $min, int $max): string|null
 {
-    $textLength = strlen($text);
+    $textLength = mb_strlen($text, 'UTF-8');
     if ($textLength < $min || $textLength > $max) {
         return "Значение поля должно быть от $min до $max символов.";
     }

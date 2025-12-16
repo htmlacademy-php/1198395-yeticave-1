@@ -41,7 +41,7 @@ function setUnicode(mysqli $connection): void
 }
 
 /**
- * Получает список 6 недавно добавленных лотов.
+ * Получает список из 6 недавно добавленных лотов, у которых не истек срок торгов (lot.date_exp).
  * @param mysqli $connection Готовое соединение.
  *
  * @return array Массив с лотами.
@@ -70,6 +70,45 @@ function getAllCats(mysqli $connection): array
 }
 
 /**
+ * Получает данные об одном лоте по его id и возвращает их в виде массива. Завершает сценарий при ошибке.
+ * @param mysqli $connection Готовое соединение.
+ * @param int $id Id лота.
+ *
+ * @return array|false Данные из БД в виде массива.
+ */
+function getLotById(mysqli $connection, int $id): array|false
+{
+    $query = 'SELECT lots.*, cats.name AS category, MAX(bids.amount) AS max_price '
+        . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
+        . 'LEFT JOIN bids ON lots.id = bids.lot_id '
+        . 'WHERE lots.id = ' . $id . ' '
+        . 'GROUP BY lots.id';
+
+    if (!$result = mysqli_query($connection, $query)) {
+        error_log(mysqli_error($connection));
+        exit('Ошибка при получении данных.');
+    }
+
+    return mysqli_fetch_assoc($result) ?? false;
+}
+
+/**
+ * Получает данные о ставках для лота по его id, отсортированные по дате (от ранних к поздним).
+ * @param mysqli $connection Ресурс соединения.
+ * @param int $lotId Id лота.
+ *
+ * @return array Массив со ставками.
+ */
+function getBidsByLot(mysqli $connection, int $lotId): array
+{
+    $query = 'SELECT bids.*, users.name AS user_name FROM bids '
+        . 'JOIN users ON bids.user_id = users.id WHERE bids.lot_id = ' . $lotId
+        . ' ORDER BY bids.created_at DESC LIMIT 10';
+
+    return getData($connection, $query);
+}
+
+/**
  * Получает данные из БД и возвращает их в виде многомерного массива. Завершает сценарий при ошибке.
  * @param mysqli $connection Готовое соединение.
  * @param string $query Запрос к БД.
@@ -87,40 +126,19 @@ function getData(mysqli $connection, string $query): array
 }
 
 /**
- * Получает данные об одном лоте по его id и возвращает их в виде массива. Завершает сценарий при ошибке.
- * @param mysqli $connection Готовое соединение.
- * @param int $id Id лота.
+ * Добавляет лот на сервер через подготовленное выражение. Возвращает либо id лота, либо false при ошибке.
+ * @param mysqli $connection Ресурс соединения.
+ * @param array $formInputs Данные из формы.
  *
- * @return array|null Данные из БД в виде массива.
+ * @return int|false Id лота, либо false при ошибке.
  */
-function getLotById(mysqli $connection, int $id): array|null
-{
-    $query = 'SELECT lots.*, cats.name AS category, MAX(bids.amount) AS max_price '
-        . 'FROM lots JOIN cats ON lots.cat_id = cats.id '
-        . 'LEFT JOIN bids ON lots.id = bids.lot_id '
-        . 'WHERE lots.id = ' . $id . ' '
-        . 'GROUP BY lots.id';
+function addLot(mysqli $connection, array $formInputs) : int|false {
+    $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, 1)';
+    $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
 
-    if (!$result = mysqli_query($connection, $query)) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
-    return mysqli_fetch_assoc($result);
-}
-
-/**
- * Получает данные о ставках для лота по его id, отсортированные по дате
- * @param mysqli $connection Ресурс соединения
- * @param int $id Id лота
- *
- * @return array Массив со ставками
- */
-function getBidsByLotId(mysqli $connection, int $id): array
-{
-    $query = 'SELECT bids.*, users.name AS user_name FROM bids '
-        . 'JOIN users ON bids.user_id = users.id WHERE bids.lot_id = ' . $id
-        . ' ORDER BY bids.created_at DESC LIMIT 10';
-    return getData($connection, $query);
+    mysqli_stmt_execute($stmt);
+    $lotId = mysqli_insert_id($connection);
+    return $lotId > 0 ? $lotId : false;
 }
 
 /**
@@ -143,7 +161,7 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
 
     if ($data) {
         $types = '';
-        $stmt_data = [];
+        $stmtData = [];
 
         foreach ($data as $value) {
             $type = 's';
@@ -157,10 +175,10 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
             }
 
             $types .= $type;
-            $stmt_data[] = $value;
+            $stmtData[] = $value;
         }
 
-        $values = array_merge([$stmt, $types], $stmt_data);
+        $values = array_merge([$stmt, $types], $stmtData);
 
         $func = 'mysqli_stmt_bind_param';
         $func(...$values);

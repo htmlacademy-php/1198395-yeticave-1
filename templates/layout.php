@@ -1,10 +1,10 @@
 <?php
 /**
- * @var $pageTitle
- * @var $isAuth
- * @var $userName
- * @var $pageContent
- * @var $cats
+ * @var $pageTitle ;
+ * @var $isAuth ;
+ * @var $userName ;
+ * @var $pageContent ;
+ * @var $navContent ;
  */
 
 ?>
@@ -57,16 +57,7 @@
     <?= $pageContent; ?>
 </div>
 <footer class="main-footer">
-    <nav class="nav">
-        <ul class="nav__list container">
-            <!--заполните этот список из массива категорий-->
-            <?php foreach ($cats as $cat) : ?>
-                <li class="nav__item">
-                    <a href="/pages/all-lots.html"><?= $cat['name']; ?></a>
-                </li>
-            <?php endforeach; ?>
-        </ul>
-    </nav>
+    <?= $navContent ?>
     <div class="main-footer__bottom container">
         <div class="main-footer__copyright">
             <p>© 2019, YetiCave</p>
