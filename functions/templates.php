@@ -61,7 +61,12 @@ function getTimePassedAfterDate(string $date, DateTime $currentDate): string
         $dateDiff->d > 0, $createdAt > $currentDate => $createdAt->format('d.m.y в H:i'),
         $dateDiff->h === 1 => 'Час назад',
         $dateDiff->i === 1 => 'Минуту назад',
-        $dateDiff->h < 1 => $dateDiff->i . ' ' . getNounPluralForm($dateDiff->i, 'минуту', 'минуты', 'минут') . ' назад',
+        $dateDiff->h < 1 => $dateDiff->i . ' ' . getNounPluralForm(
+                $dateDiff->i,
+                'минуту',
+                'минуты',
+                'минут'
+            ) . ' назад',
         default => $dateDiff->h . ' ' . getNounPluralForm($dateDiff->h, 'час', 'часа', 'часов') . ' назад',
     };
 }

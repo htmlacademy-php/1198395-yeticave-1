@@ -9,7 +9,7 @@
 ?>
 
 <main>
-    <?= $navContent ?>
+    <?= $navContent; ?>
     <section class="lot-item container">
         <h2><?= $lot['name']; ?></h2>
         <div class="lot-item__content">
@@ -57,14 +57,17 @@
                     </form>
                 </div>
                 <div class="history">
-                    <h3>История ставок (<span><?= count($bids) ?></span>)</h3>
+                    <h3>История ставок (<span><?= count($bids); ?></span>)</h3>
                     <table class="history__list">
                         <?php foreach ($bids as $bid) : ?>
-                        <tr class="history__item">
-                            <td class="history__name"><?= $bid['user_name']; ?></td>
-                            <td class="history__price"><?= formatPrice($bid['amount']); ?></td>
-                            <td class="history__time"><?= getTimePassedAfterDate($bid['created_at'], new DateTime()); ?></td>
-                        </tr>
+                            <tr class="history__item">
+                                <td class="history__name"><?= $bid['user_name']; ?></td>
+                                <td class="history__price"><?= formatPrice($bid['amount']); ?></td>
+                                <td class="history__time"><?= getTimePassedAfterDate(
+                                        $bid['created_at'],
+                                        new DateTime()
+                                    ); ?></td>
+                            </tr>
                         <?php endforeach; ?>
                     </table>
                 </div>

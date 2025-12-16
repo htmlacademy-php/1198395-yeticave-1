@@ -42,14 +42,14 @@
                         <a class="user-menu__logout" href="#">Выход</a>
                     </div>
                 <?php else : ?>
-                <ul class="user-menu__list">
-                    <li class="user-menu__item">
-                        <a href="#">Регистрация</a>
-                    </li>
-                    <li class="user-menu__item">
-                        <a href="#">Вход</a>
-                    </li>
-                </ul>
+                    <ul class="user-menu__list">
+                        <li class="user-menu__item">
+                            <a href="#">Регистрация</a>
+                        </li>
+                        <li class="user-menu__item">
+                            <a href="#">Вход</a>
+                        </li>
+                    </ul>
                 <?php endif; ?>
             </nav>
         </div>
@@ -57,7 +57,7 @@
     <?= $pageContent; ?>
 </div>
 <footer class="main-footer">
-    <?= $navContent ?>
+    <?= $navContent; ?>
     <div class="main-footer__bottom container">
         <div class="main-footer__copyright">
             <p>© 2019, YetiCave</p>

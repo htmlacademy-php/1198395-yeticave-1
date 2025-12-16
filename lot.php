@@ -32,7 +32,6 @@ if (!$lotId || !$lot = getLotById($connection, $lotId)) {
         ]
     );
     http_response_code(404);
-
 } else {
     $bids = getBidsByLot($connection, $lotId);
     $pageTitle = $lot['name'];

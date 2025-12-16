@@ -4,6 +4,7 @@
  * @var $navContent ;
  * @var $lotId ;
  */
+
 ?>
 
 <main>

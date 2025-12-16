@@ -74,10 +74,10 @@ function uploadImg(string $filename): array
         $fileType = finfo_file($fileInfo, $fileTempName);
 
         $acceptedTypes =
-        [
-            'image/jpeg' => '.jpg',
-            'image/png' => '.png'
-        ];
+            [
+                'image/jpeg' => '.jpg',
+                'image/png' => '.png'
+            ];
 
         if (!isset($acceptedTypes[$fileType])) {
             $error = 'Загрузите картинку в формате "jpeg" или "png".';

@@ -132,7 +132,8 @@ function getData(mysqli $connection, string $query): array
  *
  * @return int|false Id лота, либо false при ошибке.
  */
-function addLot(mysqli $connection, array $formInputs) : int|false {
+function addLot(mysqli $connection, array $formInputs): int|false
+{
     $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, 1)';
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
 
