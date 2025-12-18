@@ -143,6 +143,46 @@ function addLot(mysqli $connection, array $formInputs): int|false
 }
 
 /**
+ * Проверяет, есть ли в БД переданный email.
+ * @return bool True, если такого email еще нет, false - если уже есть.
+ * @var mysqli $connection Ресурс соединения.
+ * @var string $email Строка с email.
+ */
+function isEmailUnique(mysqli $connection, string $email): bool
+{
+    $query = 'SELECT EXISTS(SELECT users.email FROM users WHERE users.email = "' . $email . '") AS is_unique';
+    if (!$result = mysqli_query($connection, $query)) {
+        error_log(mysqli_error($connection));
+        exit('Ошибка при получении данных.');
+    }
+
+    $result = mysqli_fetch_assoc($result);
+
+    if ($result === false) {
+        error_log(mysqli_error($connection));
+        exit('Ошибка при получении данных.');
+    }
+
+    return (int)$result['is_unique'] === 0;
+}
+
+/**
+ * Добавляет нового пользователя в БД.
+ * @param mysqli $connection Ресурс соединения.
+ * @param array $formInputs Данные формы.
+ *
+ * @return bool Создан пользователь или нет.
+ */
+function addUser(mysqli $connection, array $formInputs): bool
+{
+    $query = 'INSERT INTO users (email, password, name, contacts) VALUES (?, ?, ?, ?)';
+    $formInputs['password'] = password_hash($formInputs['password'], PASSWORD_DEFAULT);
+
+    $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
+    return mysqli_stmt_execute($stmt);
+}
+
+/**
  * Создает подготовленное выражение на основе готового SQL запроса и переданных данных
  *
  * @param $link mysqli Ресурс соединения

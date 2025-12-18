@@ -1,5 +1,6 @@
 <?php
 
+
 require_once __DIR__ . '/init.php';
 
 /**
@@ -8,7 +9,8 @@ require_once __DIR__ . '/init.php';
  * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $validateFormAddLot ;
+ * @var $isEmailUnique ;
+ * @var $addUser ;
  */
 
 $cats = getAllCats($connection);
@@ -17,30 +19,21 @@ $pageData = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
 
-    $errors = validateFormAddLot($formInputs, $cats);
-
-    if (empty($errors)) { // Не пытаемся обработать файл, если в форме есть другие ошибки
-        $uploadStatus = uploadImg('lot-img');
-        $uploadStatus['success']
-            ? $formInputs['lot-img'] = $uploadStatus['imgPath']
-            : $errors['lot-img'] = $uploadStatus['error'];
-    }
+    $errors = validateFormSignUp($formInputs, isEmailUnique(...), $connection);
 
     if (!empty($errors)) {
         $pageData +=
             [
-                'errors' => $errors,
-                'formInputs' => $formInputs
+                'formInputs' => $formInputs,
+                'errors' => $errors
             ];
     } else {
-        $lotId = addLot($connection, $formInputs);
-
-        if ($lotId === false) {
+        if (!addUser($connection, $formInputs)) {
             error_log(mysqli_error($connection));
             exit('Не удалось отправить данные на сервер.');
         }
 
-        header('Location:lot.php?id=' . $lotId);
+        header('Location:pages/login.html');
         exit();
     }
 }
@@ -52,14 +45,10 @@ $navContent = includeTemplate(
     ]
 );
 
-$pageData +=
-    [
-        'navContent' => $navContent,
-        'cats' => $cats
-    ];
+$pageData['navContent'] = $navContent;
 
 $pageContent = includeTemplate(
-    'add.php',
+    'sign-up.php',
     $pageData
 );
 
@@ -69,7 +58,7 @@ $layoutContent = includeTemplate(
         'navContent' => $navContent,
         'pageContent' => $pageContent,
         'userName' => $userName,
-        'pageTitle' => '"Yeticave" - Добавление лота',
+        'pageTitle' => '"Yeticave" - Регистрация.',
         'isAuth' => $isAuth
     ]
 );

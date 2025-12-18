@@ -1,6 +1,35 @@
 <?php
 
 /**
+ * Принимает данные формы регистрации на сайте, проверяет их и собирает ошибки в массив.
+ * @param array $fromInputs Массив данных из формы регистрации.
+ * @param callable $isEmailUnique Функция проверки уникальности введенного email.
+ * @param mysqli $connection Ресурс соединения.
+ *
+ * @return array Массив выявленных ошибок в форме.
+ */
+function validateFormSignUp(array $fromInputs, callable $isEmailUnique, $connection): array
+{
+    $rules =
+        [
+            'email' => function ($value) use ($isEmailUnique, $connection) {
+                return validateEmail($value, $isEmailUnique, $connection);
+            },
+            'password' => function ($value) {
+                return validateTextLength($value, 8, 128);
+            },
+            'name' => function ($value) {
+                return validateTextLength($value, 1, 128);
+            },
+            'message' => function ($value) {
+                return validateEmptyText($value);
+            }
+        ];
+
+    return validateForm($fromInputs, $rules);
+}
+
+/**
  * Принимает данные формы, введенные пользователем, проверяет их и собирает ошибки в массив.
  * @param array $formInputs Массив данных из формы.
  * @param array $cats Данные о категориях, существующих на сервере.
@@ -188,6 +217,23 @@ function validateCategory(string $category, array $cats): string|null
         }
     }
     return 'Выберете категорию из списка.';
+}
+
+/**
+ * Проверяет соответствие переданной строки email-формату. Удостоверяется, что переданный email является уникальным.
+ * Возвращает либо строку с описанием ошибки, либо null, если email валиден.
+ * @param string $email Строка с предполагаемым email.
+ * @param callable $isEmailUnique Функция проверки уникальности email на сервере.
+ * @param mysqli $connection Ресурс соединения.
+ *
+ * @return string|null Текст ошибки либо null, если ошибки нет.
+ */
+function validateEmail(string $email, callable $isEmailUnique, mysqli $connection): string|null {
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        return 'Введите email в корректном формате.';
+    }
+
+   return $isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
 }
 
 /**
