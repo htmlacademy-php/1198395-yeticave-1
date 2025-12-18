@@ -14,20 +14,7 @@ require_once __DIR__ . '/init.php';
  */
 
 $cats = getAllCats($connection);
-
-$navContent = includeTemplate(
-    'nav.php',
-    [
-        'cats' => $cats
-    ]
-);
-
-$pageContent = includeTemplate(
-    'sign-up.php',
-    [
-        'navContent' => $navContent,
-    ]
-);
+$pageData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
@@ -35,14 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $errors = validateFormSignUp($formInputs, isEmailUnique(...), $connection);
 
     if (!empty($errors)) {
-        $pageContent = includeTemplate(
-            'sign-up.php',
+        $pageData +=
             [
-                'navContent' => $navContent,
                 'formInputs' => $formInputs,
                 'errors' => $errors
-            ]
-        );
+            ];
     } else {
         if (!addUser($connection, $formInputs)) {
             error_log(mysqli_error($connection));
@@ -53,6 +37,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+
+$navContent = includeTemplate(
+    'nav.php',
+    [
+        'cats' => $cats
+    ]
+);
+
+$pageData['navContent'] = $navContent;
+
+$pageContent = includeTemplate(
+    'sign-up.php',
+    $pageData
+);
 
 $layoutContent = includeTemplate(
     'layout.php',

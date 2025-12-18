@@ -13,7 +13,25 @@ require_once __DIR__ . '/init.php';
 
 $cats = getAllCats($connection);
 $lotId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+
 $pageTitle = '';
+$templateName = 'lot.php';
+$pageData = [];
+
+if (!$lotId || !$lot = getLotById($connection, $lotId)) {
+    $pageTitle = 'Страницы не существует';
+
+    $templateName = '404.php';
+    http_response_code(404);
+} else {
+    $bids = getBidsByLot($connection, $lotId);
+    $pageTitle = $lot['name'];
+    $pageData +=
+        [
+            'lot' => $lot,
+            'bids' => $bids
+        ];
+}
 
 $navContent = includeTemplate(
     'nav.php',
@@ -22,29 +40,12 @@ $navContent = includeTemplate(
     ]
 );
 
-if (!$lotId || !$lot = getLotById($connection, $lotId)) {
-    $pageTitle = 'Страницы не существует';
+$pageData['navContent'] = $navContent;
 
-    $pageContent = includeTemplate(
-        '404.php',
-        [
-            'navContent' => $navContent
-        ]
-    );
-    http_response_code(404);
-} else {
-    $bids = getBidsByLot($connection, $lotId);
-    $pageTitle = $lot['name'];
-
-    $pageContent = includeTemplate(
-        'lot.php',
-        [
-            'lot' => $lot,
-            'bids' => $bids,
-            'navContent' => $navContent
-        ]
-    );
-}
+$pageContent = includeTemplate(
+    $templateName,
+    $pageData
+);
 
 $layoutContent = includeTemplate(
     'layout.php',

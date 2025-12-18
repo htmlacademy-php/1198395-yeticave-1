@@ -12,21 +12,7 @@ require_once __DIR__ . '/init.php';
  */
 
 $cats = getAllCats($connection);
-
-$navContent = includeTemplate(
-    'nav.php',
-    [
-        'cats' => $cats
-    ]
-);
-
-$pageContent = includeTemplate(
-    'add.php',
-    [
-        'navContent' => $navContent,
-        'cats' => $cats
-    ]
-);
+$pageData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
@@ -41,15 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (!empty($errors)) {
-        $pageContent = includeTemplate(
-            'add.php',
+        $pageData +=
             [
-                'navContent' => $navContent,
-                'formInputs' => $formInputs,
-                'cats' => $cats,
-                'errors' => $errors
-            ]
-        );
+                'errors' => $errors,
+                'formInputs' => $formInputs
+            ];
     } else {
         $lotId = addLot($connection, $formInputs);
 
@@ -62,6 +44,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit();
     }
 }
+
+$navContent = includeTemplate(
+    'nav.php',
+    [
+        'cats' => $cats
+    ]
+);
+
+$pageData +=
+    [
+        'navContent' => $navContent,
+        'cats' => $cats
+    ];
+
+$pageContent = includeTemplate(
+    'add.php',
+    $pageData
+);
 
 $layoutContent = includeTemplate(
     'layout.php',
