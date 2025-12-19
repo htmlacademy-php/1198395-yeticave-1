@@ -2,16 +2,17 @@
 
 /**
  * Выполняет аутентификацию пользователя.
- * @param string $email Почта пользователя.
+ * @param array $formInputs Данные формы.
  * @param callable $getUser Функция получения данных о пользователе для сверки логина и пароля.
  * @param mysqli $connection Ресурс соединения.
  *
  * @return array Ассоциативный массив. Первый ключ - успешно/неуспешно пройденная аутентификация (булево значение). Второй ключ - данные пользователя при успехе, ошибки при неудаче.
  */
-function authUser(string $email, callable $getUser, $connection): array
+function authUser(array $formInputs, callable $getUser, mysqli $connection): array
 {
-    $userInfo = $getUser($connection, $email);
-    $success = password_verify($formInputs['password'], $userInfo['password']);
+    $userInfo = $getUser($connection, $formInputs['email']);
+
+    $success = $userInfo && password_verify($formInputs['password'], $userInfo['password']);
 
     $errors =
         [
@@ -34,7 +35,8 @@ function authUser(string $email, callable $getUser, $connection): array
  *
  * @return array Массив выявленных ошибок в форме.
  */
-function validateFormLogin(array $formInputs): array {
+function validateFormLogin(array $formInputs): array
+{
     $rules =
         [
             'email' => function ($value) {
@@ -276,12 +278,13 @@ function validateCategory(string $category, array $cats): string|null
  *
  * @return string|null Текст ошибки либо null, если ошибки нет.
  */
-function validateEmail(string $email, callable $isEmailUnique, mysqli $connection): string|null {
+function validateEmail(string $email, callable $isEmailUnique, mysqli $connection): string|null
+{
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return 'Введите email в корректном формате.';
     }
 
-   return $isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
+    return $isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
 }
 
 /**

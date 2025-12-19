@@ -149,7 +149,7 @@ function addLot(mysqli $connection, array $formInputs): int|false
  *
  * @return array|false Данные о пользователе или false, если пользователь не найден.
  */
-function getUser(mysqli $connection, string $email): array
+function getUser(mysqli $connection, string $email): array|false
 {
     $query = 'SELECT * FROM users WHERE users.email = "' . $email . '"';
     if (!$result = mysqli_query($connection, $query)) {

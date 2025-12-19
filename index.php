@@ -4,8 +4,6 @@ require_once __DIR__ . '/init.php';
 
 /**
  * @var $connection ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $getRecentLots ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
@@ -34,9 +32,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'userName' => $userName,
         'pageTitle' => '"Yeticave" - Главная страница',
-        'isAuth' => $isAuth
     ]
 );
 

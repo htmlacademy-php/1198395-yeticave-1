@@ -2,9 +2,13 @@
 
 require_once __DIR__ . '/init.php';
 
+if (isset($_SESSION['user'])) {
+    http_response_code(403);
+    exit();
+}
+
 /**
  * @var $connection ;
- * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $authUser ;
@@ -23,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $authData = authUser($formInputs, getUser(...), $connection);
 
         if ($authData['success']) {
-            session_start();
             $_SESSION['user'] = $authData['data'];
             header('Location:/index.php');
             exit();

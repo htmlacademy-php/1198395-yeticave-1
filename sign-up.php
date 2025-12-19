@@ -1,12 +1,14 @@
 <?php
 
-
 require_once __DIR__ . '/init.php';
+
+if (isset($_SESSION['user'])) {
+    http_response_code(403);
+    exit();
+}
 
 /**
  * @var $connection ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $isEmailUnique ;
@@ -57,9 +59,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'userName' => $userName,
         'pageTitle' => '"Yeticave" - Регистрация.',
-        'isAuth' => $isAuth
     ]
 );
 
