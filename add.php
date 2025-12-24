@@ -18,7 +18,7 @@ $cats = getAllCats($connection);
 $pageData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
+    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
 
     $errors = validateFormAddLot($formInputs, $cats);
 
@@ -36,6 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'formInputs' => $formInputs
             ];
     } else {
+        $formInputs['userId'] = $_SESSION['user']['id'];
         $lotId = addLot($connection, $formInputs);
 
         if ($lotId === false) {

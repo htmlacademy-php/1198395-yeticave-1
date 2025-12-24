@@ -1,41 +1,12 @@
 <?php
 
 /**
- * Выполняет аутентификацию пользователя.
- * @param array $formInputs Данные формы.
- * @param callable $getUser Функция получения данных о пользователе для сверки логина и пароля.
- * @param mysqli $connection Ресурс соединения.
- *
- * @return array Ассоциативный массив. Первый ключ - успешно/неуспешно пройденная аутентификация (булево значение). Второй ключ - данные пользователя при успехе, ошибки при неудаче.
- */
-function authUser(array $formInputs, callable $getUser, mysqli $connection): array
-{
-    $userInfo = $getUser($connection, $formInputs['email']);
-
-    $success = $userInfo && password_verify($formInputs['password'], $userInfo['password']);
-
-    $errors =
-        [
-            'email' => 'Вы ввели неверный email/пароль',
-            'password' => 'Вы ввели неверный email/пароль'
-        ];
-
-    $data = $success ? $userInfo : $errors;
-
-    return
-        [
-            'success' => $success,
-            'data' => $data
-        ];
-}
-
-/**
  * Принимает данные формы входа на сайт, проверяет их и собирает ошибки в массив.
  * @param array $formInputs Массив данных из формы регистрации.
  *
  * @return array Массив выявленных ошибок в форме.
  */
-function validateFormLogin(array $formInputs): array
+function validateFormLogin(array $formInputs, $connection): array
 {
     $rules =
         [
@@ -47,23 +18,50 @@ function validateFormLogin(array $formInputs): array
             }
         ];
 
-    return validateForm($formInputs, $rules);
+    $errors = validateForm($formInputs, $rules);
+
+    if (!empty($errors)) {
+        return
+            [
+                'success' => false,
+                'errors' => $errors
+            ];
+    }
+
+    $user = getUser($connection, $formInputs['email']);
+
+    if ($user && password_verify($formInputs['password'], $user['password'])) {
+        return
+            [
+                'success' => true,
+                'user' => $user
+            ];
+    }
+
+    return
+        [
+            'success' => false,
+            'errors' =>
+                [
+                    'email' => 'Вы ввели неверный email/пароль',
+                    'password' => 'Вы ввели неверный email/пароль'
+                ]
+        ];
 }
 
 /**
  * Принимает данные формы регистрации на сайте, проверяет их и собирает ошибки в массив.
  * @param array $fromInputs Массив данных из формы регистрации.
- * @param callable $isEmailUnique Функция проверки уникальности введенного email.
  * @param mysqli $connection Ресурс соединения.
  *
  * @return array Массив выявленных ошибок в форме.
  */
-function validateFormSignUp(array $fromInputs, callable $isEmailUnique, $connection): array
+function validateFormSignUp(array $fromInputs, $connection): array
 {
     $rules =
         [
-            'email' => function ($value) use ($isEmailUnique, $connection) {
-                return validateEmail($value, $isEmailUnique, $connection);
+            'email' => function ($value) use ($connection) {
+                return validateEmail($value, $connection);
             },
             'password' => function ($value) {
                 return validateTextLength($value, 8, 128);
@@ -131,54 +129,6 @@ function validateForm(array $formInputs, array $rules): array
     }
 
     return array_filter($errors);
-}
-
-/**
- * Проверяет файл, который пользователь добавил в форму. При успешной валидации загружает файл на сервер и возвращает путь к файлу на сервере,
- * при неуспешной - возвращает сообщение ошибки.
- * @param string $filename Имя файла в системе пользователя.
- *
- * @return array Массив, состоящий из статуса загрузки файла, сообщения об ошибке и пути к файлу на сервере.
- */
-function uploadImg(string $filename): array
-{
-    $error = '';
-    $imgPath = '';
-
-    if (!empty($_FILES[$filename]['tmp_name'])) {
-        $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
-        $fileTempName = $_FILES[$filename]['tmp_name'];
-        $fileSize = $_FILES[$filename]['size'];
-
-        $fileType = finfo_file($fileInfo, $fileTempName);
-
-        $acceptedTypes =
-            [
-                'image/jpeg' => '.jpg',
-                'image/png' => '.png'
-            ];
-
-        if (!isset($acceptedTypes[$fileType])) {
-            $error = 'Загрузите картинку в формате "jpeg" или "png".';
-        } elseif ($fileSize > 2000000) {
-            $error = 'Максимальный размер файла: 2МБ.';
-        } else {
-            $fileType = $acceptedTypes[$fileType];
-            $filePath = 'uploads/' . uniqid() . $fileType;
-
-            move_uploaded_file($fileTempName, $filePath)
-                ? $imgPath = '/' . $filePath
-                : $error = 'Ошибка при загрузке файла.';
-        }
-    } else {
-        $error = 'Загрузите картинку в формате "jpeg" или "png".';
-    }
-
-    return [
-        'success' => empty($error) && !empty($imgPath),
-        'error' => $error,
-        'imgPath' => $imgPath
-    ];
 }
 
 /**
@@ -278,13 +228,13 @@ function validateCategory(string $category, array $cats): string|null
  *
  * @return string|null Текст ошибки либо null, если ошибки нет.
  */
-function validateEmail(string $email, callable $isEmailUnique, mysqli $connection): string|null
+function validateEmail(string $email, mysqli $connection): string|null
 {
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return 'Введите email в корректном формате.';
     }
 
-    return $isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
+    return isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
 }
 
 /**

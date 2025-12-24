@@ -20,25 +20,19 @@ $cats = getAllCats($connection);
 $pageData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
-    $errors = validateFormLogin($formInputs);
+    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+    $validStatus = validateFormLogin($formInputs, $connection);
 
-    if (empty($errors)) {
-        $authData = authUser($formInputs, getUser(...), $connection);
-
-        if ($authData['success']) {
-            $_SESSION['user'] = $authData['data'];
-            header('Location:/index.php');
-            exit();
-        }
-
-        $errors = $authData['data'];
+    if ($validStatus['success']) {
+        $_SESSION['user'] = $validStatus['user'];
+        header('Location:/');
+        exit();
     }
 
     $pageData +=
         [
             'formInputs' => $formInputs,
-            'errors' => $errors
+            'errors' => $validStatus['errors']
         ];
 }
 

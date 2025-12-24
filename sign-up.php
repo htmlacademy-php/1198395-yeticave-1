@@ -11,7 +11,6 @@ if (isset($_SESSION['user'])) {
  * @var $connection ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $isEmailUnique ;
  * @var $addUser ;
  */
 
@@ -19,9 +18,9 @@ $cats = getAllCats($connection);
 $pageData = [];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
+    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
 
-    $errors = validateFormSignUp($formInputs, isEmailUnique(...), $connection);
+    $errors = validateFormSignUp($formInputs, $connection);
 
     if (!empty($errors)) {
         $pageData +=

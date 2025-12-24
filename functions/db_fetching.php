@@ -134,7 +134,7 @@ function getData(mysqli $connection, string $query): array
  */
 function addLot(mysqli $connection, array $formInputs): int|false
 {
-    $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, 1)';
+    $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
 
     mysqli_stmt_execute($stmt);
@@ -151,11 +151,10 @@ function addLot(mysqli $connection, array $formInputs): int|false
  */
 function getUser(mysqli $connection, string $email): array|false
 {
-    $query = 'SELECT * FROM users WHERE users.email = "' . $email . '"';
-    if (!$result = mysqli_query($connection, $query)) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
+    $query = 'SELECT * FROM users WHERE users.email = ?';
+    $stmt = dbGetPrepareStmt($connection, $query, [$email]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
     return mysqli_fetch_assoc($result) ?? false;
 }
@@ -168,18 +167,12 @@ function getUser(mysqli $connection, string $email): array|false
  */
 function isEmailUnique(mysqli $connection, string $email): bool
 {
-    $query = 'SELECT EXISTS(SELECT users.email FROM users WHERE users.email = "' . $email . '") AS is_unique';
-    if (!$result = mysqli_query($connection, $query)) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
+    $query = 'SELECT EXISTS(SELECT users.email FROM users WHERE users.email = ?) AS is_unique';
 
+    $stmt = dbGetPrepareStmt($connection, $query, [$email]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
-
-    if ($result === false) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
 
     return (int)$result['is_unique'] === 0;
 }
