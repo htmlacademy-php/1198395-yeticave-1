@@ -2,11 +2,6 @@
 
 require_once __DIR__ . '/init.php';
 
-if (!isset($_SESSION['user'])) {
-    http_response_code(403);
-    exit();
-}
-
 /**
  * @var $connection ;
  * @var $getAllCats ;
@@ -16,6 +11,18 @@ if (!isset($_SESSION['user'])) {
 
 $cats = getAllCats($connection);
 $pageData = [];
+
+if (!isset($_SESSION['user'])) {
+    $pageTitle = '403 Войдите на сайт';
+
+    $templateName = 'error.php';
+    $pageData['errorTitle'] = $pageTitle;
+    $pageData['errorMessage'] = 'Войдите на сайт, чтобы добавить свой лот';
+    http_response_code(403);
+} else {
+    $pageTitle = 'Добавление лота';
+    $templateName = 'add.php';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -63,7 +70,7 @@ $pageData +=
     ];
 
 $pageContent = includeTemplate(
-    'add.php',
+    $templateName,
     $pageData
 );
 
@@ -72,7 +79,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'pageTitle' => '"Yeticave" - Добавление лота',
+        'pageTitle' => '"Yeticave" - ' . $pageTitle,
     ]
 );
 

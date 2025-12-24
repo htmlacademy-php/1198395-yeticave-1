@@ -17,9 +17,11 @@ $templateName = 'lot.php';
 $pageData = [];
 
 if (!$lotId || !$lot = getLotById($connection, $lotId)) {
-    $pageTitle = 'Страницы не существует';
+    $pageTitle = '404 Страницы не существует';
 
-    $templateName = '404.php';
+    $templateName = 'error.php';
+    $pageData['errorTitle'] = $pageTitle;
+    $pageData['errorMessage'] = 'Данной страницы не существует на сайте.';
     http_response_code(404);
 } else {
     $bids = getBidsByLot($connection, $lotId);

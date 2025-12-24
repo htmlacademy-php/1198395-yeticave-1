@@ -2,51 +2,53 @@
 
 /**
  * Принимает данные формы входа на сайт, проверяет их и собирает ошибки в массив.
- * @param array $formInputs Массив данных из формы регистрации.
+ * @param array $formInputs Массив данных из формы входа.
+ * @param mysqli $connection Ресурс соединения. Нужен для сверки логина/пароля с БД.
  *
- * @return array Массив выявленных ошибок в форме.
+ * @return array Ассоциативный массив с тремя ключами:
+ * bool success - успех/неуспех валидации;
+ * array user - информация пользователя при совпадении пары email/пароль;
+ * array errors - ошибки валидации.
  */
-function validateFormLogin(array $formInputs, $connection): array
+function validateFormLogin(array $formInputs, mysqli $connection): array
 {
+    $result =
+        [
+            'success' => false,
+            'user' => [],
+        ];
+
     $rules =
         [
             'email' => function ($value) {
-                return filter_var($value, FILTER_VALIDATE_EMAIL) ? '' : 'Введите email в корректном формате.';
+                return validateEmail($value, 128);
             },
             'password' => function ($value) {
                 return validateTextLength($value, 8, 128);
             }
         ];
 
-    $errors = validateForm($formInputs, $rules);
+    $result['errors'] = validateForm($formInputs, $rules);
 
-    if (!empty($errors)) {
-        return
-            [
-                'success' => false,
-                'errors' => $errors
-            ];
+    if (!empty($result['errors'])) {
+        return $result;
     }
 
     $user = getUser($connection, $formInputs['email']);
 
-    if ($user && password_verify($formInputs['password'], $user['password'])) {
-        return
+    $result['success'] = $user && password_verify($formInputs['password'], $user['password']);
+
+    if ($result['success']) {
+        $result['user'] = $user;
+    } else {
+        $result['errors'] =
             [
-                'success' => true,
-                'user' => $user
+                'email' => 'Вы ввели неверный email/пароль',
+                'password' => 'Вы ввели неверный email/пароль'
             ];
     }
 
-    return
-        [
-            'success' => false,
-            'errors' =>
-                [
-                    'email' => 'Вы ввели неверный email/пароль',
-                    'password' => 'Вы ввели неверный email/пароль'
-                ]
-        ];
+    return $result;
 }
 
 /**
@@ -56,12 +58,12 @@ function validateFormLogin(array $formInputs, $connection): array
  *
  * @return array Массив выявленных ошибок в форме.
  */
-function validateFormSignUp(array $fromInputs, $connection): array
+function validateFormSignUp(array $fromInputs, mysqli $connection): array
 {
     $rules =
         [
             'email' => function ($value) use ($connection) {
-                return validateEmail($value, $connection);
+                return validateEmail($value, 128);
             },
             'password' => function ($value) {
                 return validateTextLength($value, 8, 128);
@@ -74,11 +76,17 @@ function validateFormSignUp(array $fromInputs, $connection): array
             }
         ];
 
-    return validateForm($fromInputs, $rules);
+    $errors = validateForm($fromInputs, $rules);
+
+    if (!isset($errors['email']) && !isEmailUnique($connection, $fromInputs['email'])) {
+        $errors['email'] = 'Пользователь с таким email уже зарегистрирован.';
+    }
+
+    return $errors;
 }
 
 /**
- * Принимает данные формы, введенные пользователем, проверяет их и собирает ошибки в массив.
+ * Принимает данные формы добавления лота, проверяет их и собирает ошибки в массив.
  * @param array $formInputs Массив данных из формы.
  * @param array $cats Данные о категориях, существующих на сервере.
  *
@@ -223,18 +231,21 @@ function validateCategory(string $category, array $cats): string|null
  * Проверяет соответствие переданной строки email-формату. Удостоверяется, что переданный email является уникальным.
  * Возвращает либо строку с описанием ошибки, либо null, если email валиден.
  * @param string $email Строка с предполагаемым email.
- * @param callable $isEmailUnique Функция проверки уникальности email на сервере.
- * @param mysqli $connection Ресурс соединения.
+ * @param int $max Максимальная длина email.
  *
  * @return string|null Текст ошибки либо null, если ошибки нет.
  */
-function validateEmail(string $email, mysqli $connection): string|null
+function validateEmail(string $email, int $max): string|null
 {
+    if (mb_strlen($email, 'UTF-8') > $max) {
+        return 'Длина email не может превышать ' . $max . ' символов.';
+    }
+
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         return 'Введите email в корректном формате.';
     }
 
-    return isEmailUnique($connection, $email) ? null : 'Пользователь с таким email уже зарегистрирован.';
+    return null;
 }
 
 /**

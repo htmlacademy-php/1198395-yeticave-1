@@ -2,11 +2,6 @@
 
 require_once __DIR__ . '/init.php';
 
-if (isset($_SESSION['user'])) {
-    http_response_code(403);
-    exit();
-}
-
 /**
  * @var $connection ;
  * @var $getAllCats ;
@@ -16,6 +11,18 @@ if (isset($_SESSION['user'])) {
 
 $cats = getAllCats($connection);
 $pageData = [];
+
+if (isset($_SESSION['user'])) {
+    $pageTitle = '403 Вы уже зарегистрированы';
+
+    $templateName = 'error.php';
+    $pageData['errorTitle'] = $pageTitle;
+    $pageData['errorMessage'] = 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта';
+    http_response_code(403);
+} else {
+    $pageTitle = 'Регистрация';
+    $templateName = 'sign-up.php';
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
@@ -49,7 +56,7 @@ $navContent = includeTemplate(
 $pageData['navContent'] = $navContent;
 
 $pageContent = includeTemplate(
-    'sign-up.php',
+    $templateName,
     $pageData
 );
 
@@ -58,7 +65,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'pageTitle' => '"Yeticave" - Регистрация.',
+        'pageTitle' => '"Yeticave" - ' . $pageTitle,
     ]
 );
 
