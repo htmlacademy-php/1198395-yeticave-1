@@ -4,8 +4,6 @@ require_once __DIR__ . '/init.php';
 
 /**
  * @var $connection ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $validateFormAddLot ;
@@ -14,8 +12,20 @@ require_once __DIR__ . '/init.php';
 $cats = getAllCats($connection);
 $pageData = [];
 
+if (!isset($_SESSION['user'])) {
+    $pageTitle = '403 Войдите на сайт';
+
+    $templateName = 'error.php';
+    $pageData['errorTitle'] = $pageTitle;
+    $pageData['errorMessage'] = 'Войдите на сайт, чтобы добавить свой лот';
+    http_response_code(403);
+} else {
+    $pageTitle = 'Добавление лота';
+    $templateName = 'add.php';
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS, true);
+    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
 
     $errors = validateFormAddLot($formInputs, $cats);
 
@@ -33,6 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 'formInputs' => $formInputs
             ];
     } else {
+        $formInputs['userId'] = $_SESSION['user']['id'];
         $lotId = addLot($connection, $formInputs);
 
         if ($lotId === false) {
@@ -40,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             exit('Не удалось отправить данные на сервер.');
         }
 
-        header('Location:lot.php?id=' . $lotId);
+        header('Location:/lot.php?id=' . $lotId);
         exit();
     }
 }
@@ -59,7 +70,7 @@ $pageData +=
     ];
 
 $pageContent = includeTemplate(
-    'add.php',
+    $templateName,
     $pageData
 );
 
@@ -68,9 +79,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'userName' => $userName,
-        'pageTitle' => '"Yeticave" - Добавление лота',
-        'isAuth' => $isAuth
+        'pageTitle' => '"Yeticave" - ' . $pageTitle,
     ]
 );
 

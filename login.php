@@ -6,44 +6,41 @@ require_once __DIR__ . '/init.php';
  * @var $connection ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $addUser ;
+ * @var $authUser ;
+ * @var $getUser ;
+ * @var $validateFormLogin ;
  */
 
 $cats = getAllCats($connection);
 $pageData = [];
 
 if (isset($_SESSION['user'])) {
-    $pageTitle = '403 Вы уже зарегистрированы';
+    $pageTitle = '403 Вы уже вошли в аккаунт';
 
     $templateName = 'error.php';
     $pageData['errorTitle'] = $pageTitle;
-    $pageData['errorMessage'] = 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта';
+    $pageData['errorMessage'] = 'Вы уже выполнили вход на сайт';
     http_response_code(403);
 } else {
-    $pageTitle = 'Регистрация';
-    $templateName = 'sign-up.php';
+    $pageTitle = 'Вход';
+    $templateName = 'login.php';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+    $validStatus = validateFormLogin($formInputs, $connection);
 
-    $errors = validateFormSignUp($formInputs, $connection);
-
-    if (!empty($errors)) {
-        $pageData +=
-            [
-                'formInputs' => $formInputs,
-                'errors' => $errors
-            ];
-    } else {
-        if (!addUser($connection, $formInputs)) {
-            error_log(mysqli_error($connection));
-            exit('Не удалось отправить данные на сервер.');
-        }
-
-        header('Location:/login.php');
+    if ($validStatus['success']) {
+        $_SESSION['user'] = $validStatus['user'];
+        header('Location:/');
         exit();
     }
+
+    $pageData +=
+        [
+            'formInputs' => $formInputs,
+            'errors' => $validStatus['errors']
+        ];
 }
 
 $navContent = includeTemplate(

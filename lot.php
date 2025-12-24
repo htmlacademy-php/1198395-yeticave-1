@@ -4,8 +4,6 @@ require_once __DIR__ . '/init.php';
 
 /**
  * @var $connection ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $getBidsByLotId ;
@@ -19,9 +17,11 @@ $templateName = 'lot.php';
 $pageData = [];
 
 if (!$lotId || !$lot = getLotById($connection, $lotId)) {
-    $pageTitle = 'Страницы не существует';
+    $pageTitle = '404 Страницы не существует';
 
-    $templateName = '404.php';
+    $templateName = 'error.php';
+    $pageData['errorTitle'] = $pageTitle;
+    $pageData['errorMessage'] = 'Данной страницы не существует на сайте.';
     http_response_code(404);
 } else {
     $bids = getBidsByLot($connection, $lotId);
@@ -52,9 +52,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'userName' => $userName,
         'pageTitle' => '"Yeticave" - ' . $pageTitle,
-        'isAuth' => $isAuth
     ]
 );
 
