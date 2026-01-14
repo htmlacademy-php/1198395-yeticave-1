@@ -31,7 +31,7 @@ function getNounPluralForm(int $number, string $one, string $two, string $many):
     return match (true) {
         $number >= 2 && $number <= 4 => $two,
         $mod100 >= 11 && $mod100 <= 20, $mod10 > 5, $mod10 == 0 => $many,
-        $mod10 === 1 => $one
+        $mod10 === 1 => $one,
     };
 }
 
@@ -62,11 +62,11 @@ function getTimePassedAfterDate(string $date, DateTime $currentDate): string
         $dateDiff->h === 1 => 'Час назад',
         $dateDiff->i === 1 => 'Минуту назад',
         $dateDiff->h < 1 => $dateDiff->i . ' ' . getNounPluralForm(
-                $dateDiff->i,
-                'минуту',
-                'минуты',
-                'минут'
-            ) . ' назад',
+            $dateDiff->i,
+            'минуту',
+            'минуты',
+            'минут',
+        ) . ' назад',
         default => $dateDiff->h . ' ' . getNounPluralForm($dateDiff->h, 'час', 'часа', 'часов') . ' назад',
     };
 }
@@ -104,7 +104,7 @@ function formatPrice(int $price): string
         $price > 1000
             ? number_format($price, 0, '', ' ')
             : $price
-        )
+    )
         . '<b class="rub">р</b>';
 }
 
@@ -135,4 +135,45 @@ function getDtRange(string $date, DateTime $currentDate): array
     $minutesLeft = str_pad($dateDiff->i, 2, '0', STR_PAD_LEFT);
 
     return [$resultHours, $minutesLeft];
+}
+
+/**
+ * Показывает шаблон ошибки с заданным кодом и сообщением.
+ * @param int $code Код ошибки.
+ * @param string $message Сообщение ошибки.
+ * @param array $cats Категории (необходимы для отображения навигации).
+ * @param array|false $user Информация о пользователе (необходима для шаблона).
+ */
+function showError(int $code, string $message, array $cats, array|false $user): void
+{
+    $errorTitle = 'Ошибка ' . $code;
+    $navContent = includeTemplate(
+        'nav.php',
+        [
+            'cats' => $cats,
+        ],
+    );
+
+    $pageContent = includeTemplate(
+        'error.php',
+        [
+            'navContent' => $navContent,
+            'errorMessage' => $message,
+            'errorTitle' => $errorTitle,
+        ],
+    );
+
+    $layoutContent = includeTemplate(
+        'layout.php',
+        [
+            'navContent' => $navContent,
+            'pageContent' => $pageContent,
+            'pageTitle' => '"Yeticave" - ' . $errorTitle,
+            'user' => $user,
+        ],
+    );
+
+    http_response_code($code);
+    print($layoutContent);
+    exit();
 }

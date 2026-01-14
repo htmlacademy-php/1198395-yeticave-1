@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @var $lot ;
- * @var $navContent ;
- * @var $bids ;
+ * @var array $lot ;
+ * @var string $navContent ;
+ * @var array $bids ;
+ * @var array|false $user ;
  */
 
 ?>
@@ -26,6 +27,7 @@
                 <p class="lot-item__description"><?= $lot['description']; ?></p>
             </div>
             <div class="lot-item__right">
+                <?php if ($user !== false): ?>
                 <div class="lot-item__state">
                     <?php [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime()); ?>
                     <div class="lot-item__timer <?= (int)$hours === 0 ? 'timer--finishing' : ''; ?>  timer">
@@ -56,6 +58,7 @@
                         <button type="submit" class="button">Сделать ставку</button>
                     </form>
                 </div>
+                <?php endif ; ?>
                 <div class="history">
                     <h3>История ставок (<span><?= count($bids); ?></span>)</h3>
                     <table class="history__list">
@@ -64,9 +67,9 @@
                                 <td class="history__name"><?= $bid['user_name']; ?></td>
                                 <td class="history__price"><?= formatPrice($bid['amount']); ?></td>
                                 <td class="history__time"><?= getTimePassedAfterDate(
-                                        $bid['created_at'],
-                                        new DateTime()
-                                    ); ?></td>
+                                    $bid['created_at'],
+                                    new DateTime(),
+                                ); ?></td>
                             </tr>
                         <?php endforeach; ?>
                     </table>

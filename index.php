@@ -4,8 +4,6 @@ require_once __DIR__ . '/init.php';
 
 /**
  * @var $connection ;
- * @var $isAuth ;
- * @var $userName ;
  * @var $getRecentLots ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
@@ -13,20 +11,21 @@ require_once __DIR__ . '/init.php';
 
 $lots = getRecentLots($connection);
 $cats = getAllCats($connection);
+$user = getAuthUser($connection);
 
 $navContent = includeTemplate(
     'nav.php',
     [
-        'cats' => $cats
-    ]
+        'cats' => $cats,
+    ],
 );
 
 $pageContent = includeTemplate(
     'main.php',
     [
         'lots' => $lots,
-        'cats' => $cats
-    ]
+        'cats' => $cats,
+    ],
 );
 
 $layoutContent = includeTemplate(
@@ -34,10 +33,9 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'userName' => $userName,
         'pageTitle' => '"Yeticave" - Главная страница',
-        'isAuth' => $isAuth
-    ]
+        'user' => $user,
+    ],
 );
 
 print($layoutContent);

@@ -6,7 +6,7 @@ return [
     'host' => 'localhost',
     'user' => 'root',
     'password' => '',
-    'database' => 'yeticave'
+    'database' => 'yeticave',
     ],
-    'mailer' => []
+    'mailer' => [],
 ];

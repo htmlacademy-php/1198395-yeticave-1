@@ -6,30 +6,29 @@ require_once __DIR__ . '/init.php';
  * @var $connection ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $addUser ;
+ * @var $authUser ;
+ * @var $getUser ;
+ * @var $validateFormLogin ;
  */
 
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
 if ($user !== false) {
-    showError(403, 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта', $cats, $user);
+    showError(403, 'Вы уже выполнили вход на сайт', $cats, $user);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+    $validStatus = validateFormLogin($formInputs, $connection);
 
-    $errors = validateFormSignUp($formInputs, $connection);
-
-    if (empty($errors)) {
-        $success = addUser($connection, $formInputs);
-        if ($success) {
-            header('Location:/login.php');
-            exit();
-        } else {
-            exit('При сохранении данных произошла ошибка.');
-        }
+    if ($validStatus['success']) {
+        $_SESSION['user'] = $validStatus['user'];
+        header('Location:/');
+        exit();
     }
+
+    $errors = $validStatus['errors'];
 }
 
 $navContent = includeTemplate(
@@ -40,7 +39,7 @@ $navContent = includeTemplate(
 );
 
 $pageContent = includeTemplate(
-    'sign-up.php',
+    'login.php',
     [
         'navContent' => $navContent,
         'formInputs' => $formInputs ?? [],
@@ -53,7 +52,7 @@ $layoutContent = includeTemplate(
     [
         'navContent' => $navContent,
         'pageContent' => $pageContent,
-        'pageTitle' => '"Yeticave" - Регистрация.',
+        'pageTitle' => '"Yeticave" - Вход',
         'user' => $user,
     ],
 );

@@ -15,7 +15,6 @@ function createConnection(array $config): mysqli
         exit('Ошибка соединения с базой данных.');
     }
 
-
     if (!$connection) {
         error_log(mysqli_connect_error());
         exit('Ошибка соединения с базой данных.');
@@ -134,12 +133,50 @@ function getData(mysqli $connection, string $query): array
  */
 function addLot(mysqli $connection, array $formInputs): int|false
 {
-    $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, 1)';
+    $query = 'INSERT INTO lots (created_at, name, cat_id, description, price, bid_step, date_exp, img_url, user_id) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
 
     mysqli_stmt_execute($stmt);
     $lotId = mysqli_insert_id($connection);
     return $lotId > 0 ? $lotId : false;
+}
+
+/**
+ * Получает информацию о пользователе по переданному email.
+ * @var mysqli $connection Ресурс соединения.
+ * @var string $email Строка с email.
+ *
+ * @return array|false Данные о пользователе или false, если пользователь не найден.
+ */
+function getUser(mysqli $connection, string $email): array|false
+{
+    $query = 'SELECT * FROM users WHERE users.email = ?';
+    $stmt = dbGetPrepareStmt($connection, $query, [$email]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+
+    return mysqli_fetch_assoc($result) ?? false;
+}
+
+/**
+ * Проверяет наличие открытой сессии для пользователя. При наличии таковой, удостоверяется, что пользователь всё ещё есть в БД.
+ * Если пользователь не был найден, обнуляет сессию.
+ * @param mysqli $connection Ресурс соединения.
+ * @return array|false Либо массив с данными о пользователе, либо false.
+ */
+function getAuthUser(mysqli $connection): array|false
+{
+    if (!isset($_SESSION['user'])) {
+        return false;
+    }
+
+    $result = getUser($connection, $_SESSION['user']['email']);
+
+    if ($result === false) {
+        $_SESSION = [];
+    }
+
+    return $result;
 }
 
 /**
@@ -150,18 +187,12 @@ function addLot(mysqli $connection, array $formInputs): int|false
  */
 function isEmailUnique(mysqli $connection, string $email): bool
 {
-    $query = 'SELECT EXISTS(SELECT users.email FROM users WHERE users.email = "' . $email . '") AS is_unique';
-    if (!$result = mysqli_query($connection, $query)) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
+    $query = 'SELECT EXISTS(SELECT users.email FROM users WHERE users.email = ?) AS is_unique';
 
+    $stmt = dbGetPrepareStmt($connection, $query, [$email]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
-
-    if ($result === false) {
-        error_log(mysqli_error($connection));
-        exit('Ошибка при получении данных.');
-    }
 
     return (int)$result['is_unique'] === 0;
 }
@@ -179,7 +210,11 @@ function addUser(mysqli $connection, array $formInputs): bool
     $formInputs['password'] = password_hash($formInputs['password'], PASSWORD_DEFAULT);
 
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
-    return mysqli_stmt_execute($stmt);
+    if (!mysqli_stmt_execute($stmt)) {
+        error_log(mysqli_error($connection));
+        return false;
+    }
+    return true;
 }
 
 /**

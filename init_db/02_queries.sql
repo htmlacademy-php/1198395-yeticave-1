@@ -23,15 +23,15 @@ VALUES ('a@mail.ru', 'Иван', '123qwe', 'vk/tg'),
 INSERT INTO lots (created_at, name, description, img_url, price, date_exp, bid_step, user_id, cat_id)
 VALUES ('2025-12-04 10:10:10', '2014 Rossignol District Snowboard', 'Описание', '/img/lot-1.jpg', 10999, '2026-02-01',
         1000, 1, 1),
-       ('2025-12-04 11:10:10', 'DC Ply Mens 2016/2017 Snowboard', 'Описание', '/img/lot-2.jpg', 159999, '2025-12-14',
+       ('2025-12-04 11:10:10', 'DC Ply Mens 2016/2017 Snowboard', 'Описание', '/img/lot-2.jpg', 159999, '2027-12-14',
         1000, 2, 1),
        ('2025-12-04 12:10:10', 'Крепления Union Contact Pro 2015 года размер L/XL', 'Описание', '/img/lot-3.jpg', 8000,
         '2026-02-06', 1000, 3, 2),
        ('2025-12-04 13:10:10', 'Ботинки для сноуборда DC Mutiny Charcoal', 'Описание', '/img/lot-4.jpg', 10999,
-        '2026-01-01', 1000, 1, 3),
+        '2026-01-30', 1000, 1, 3),
        ('2025-12-04 14:10:10', 'Куртка для сноуборда DC Mutiny Charcoal', 'Описание', '/img/lot-5.jpg', 7500,
-        '2025-12-31', 1000, 2, 4),
-       ('2025-12-04 15:10:10', 'Маска Oakley Canopy', 'Описание', '/img/lot-6.jpg', 5400, '2025-12-11', 1000, 4, 6);
+        '2026-01-20', 1000, 2, 4),
+       ('2025-12-04 15:10:10', 'Маска Oakley Canopy', 'Описание', '/img/lot-6.jpg', 5400, '2026-01-31', 1000, 4, 6);
 
 -- Создание тестовых ставок.
 INSERT INTO bids (created_at, amount, user_id, lot_id)
