@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @var $cats ;
+ * @var array $cats ;
  */
 
 ?>

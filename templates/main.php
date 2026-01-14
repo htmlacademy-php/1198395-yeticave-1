@@ -1,8 +1,8 @@
 <?php
 
 /**
- * @var $cats
- * @var $lots
+ * @var array $cats
+ * @var array $lots
  */
 
 ?>

@@ -11,6 +11,7 @@ require_once __DIR__ . '/init.php';
 
 $lots = getRecentLots($connection);
 $cats = getAllCats($connection);
+$user = getAuthUser($connection);
 
 $navContent = includeTemplate(
     'nav.php',
@@ -33,6 +34,7 @@ $layoutContent = includeTemplate(
         'navContent' => $navContent,
         'pageContent' => $pageContent,
         'pageTitle' => '"Yeticave" - Главная страница',
+        'user' => $user,
     ],
 );
 

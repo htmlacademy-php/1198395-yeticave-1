@@ -12,9 +12,10 @@ require_once __DIR__ . '/init.php';
  */
 
 $cats = getAllCats($connection);
+$user = getAuthUser($connection);
 
-if (isset($_SESSION['user'])) {
-    showError(403, 'Вы уже выполнили вход на сайт', $cats);
+if ($user !== false) {
+    showError(403, 'Вы уже выполнили вход на сайт', $cats, $user);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,6 +53,7 @@ $layoutContent = includeTemplate(
         'navContent' => $navContent,
         'pageContent' => $pageContent,
         'pageTitle' => '"Yeticave" - Вход',
+        'user' => $user,
     ],
 );
 

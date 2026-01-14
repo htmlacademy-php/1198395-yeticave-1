@@ -10,9 +10,10 @@ require_once __DIR__ . '/init.php';
  */
 
 $cats = getAllCats($connection);
+$user = getAuthUser($connection);
 
-if (isset($_SESSION['user'])) {
-    showError(403, 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта', $cats);
+if ($user !== false) {
+    showError(403, 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта', $cats, $user);
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -53,6 +54,7 @@ $layoutContent = includeTemplate(
         'navContent' => $navContent,
         'pageContent' => $pageContent,
         'pageTitle' => '"Yeticave" - Регистрация.',
+        'user' => $user,
     ],
 );
 

@@ -11,6 +11,7 @@ require_once __DIR__ . '/init.php';
 
 $cats = getAllCats($connection);
 $lotId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+$user = getAuthUser($connection);
 
 if ($lotId && $lot = getLotById($connection, $lotId)) {
     $bids = getBidsByLot($connection, $lotId);
@@ -28,6 +29,7 @@ if ($lotId && $lot = getLotById($connection, $lotId)) {
             'navContent' => $navContent,
             'lot' => $lot,
             'bids' => $bids,
+            'user' => $user,
         ],
     );
 
@@ -37,10 +39,11 @@ if ($lotId && $lot = getLotById($connection, $lotId)) {
             'navContent' => $navContent,
             'pageContent' => $pageContent,
             'pageTitle' => '"Yeticave" - ' . $lot['name'],
+            'user' => $user,
         ],
     );
 
     print($layoutContent);
 } else {
-    showError(404, 'Данной страницы не существует на сайте.', $cats);
+    showError(404, 'Данной страницы не существует на сайте.', $cats, $user);
 }

@@ -1,9 +1,10 @@
 <?php
 
 /**
- * @var $lot ;
- * @var $navContent ;
- * @var $bids ;
+ * @var array $lot ;
+ * @var string $navContent ;
+ * @var array $bids ;
+ * @var array|false $user ;
  */
 
 ?>
@@ -26,7 +27,7 @@
                 <p class="lot-item__description"><?= $lot['description']; ?></p>
             </div>
             <div class="lot-item__right">
-                <?php if (isset($_SESSION['user'])): ?>
+                <?php if ($user !== false): ?>
                 <div class="lot-item__state">
                     <?php [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime()); ?>
                     <div class="lot-item__timer <?= (int)$hours === 0 ? 'timer--finishing' : ''; ?>  timer">

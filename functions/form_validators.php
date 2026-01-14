@@ -39,7 +39,12 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
     $result['success'] = $user && password_verify($formInputs['password'], $user['password']);
 
     if ($result['success']) {
-        $result['user'] = $user;
+        $result['user'] =
+            [
+                'id' => $user['id'],
+                'email' => $user['email'],
+                'name' => $user['name'],
+            ];
     } else {
         $result['errors'] =
             [

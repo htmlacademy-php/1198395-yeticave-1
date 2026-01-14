@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @var $navContent ;
- * @var $formInputs ;
- * @var $errors ;
+ * @var string $navContent ;
+ * @var array $formInputs ;
+ * @var array $errors ;
  */
 
 ?>

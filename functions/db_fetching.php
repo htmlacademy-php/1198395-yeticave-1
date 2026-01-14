@@ -159,6 +159,27 @@ function getUser(mysqli $connection, string $email): array|false
 }
 
 /**
+ * Проверяет наличие открытой сессии для пользователя. При наличии таковой, удостоверяется, что пользователь всё ещё есть в БД.
+ * Если пользователь не был найден, обнуляет сессию.
+ * @param mysqli $connection Ресурс соединения.
+ * @return array|false Либо массив с данными о пользователе, либо false.
+ */
+function getAuthUser(mysqli $connection): array|false
+{
+    if (!isset($_SESSION['user'])) {
+        return false;
+    }
+
+    $result = getUser($connection, $_SESSION['user']['email']);
+
+    if ($result === false) {
+        $_SESSION = [];
+    }
+
+    return $result;
+}
+
+/**
  * Проверяет, есть ли в БД переданный email.
  * @return bool True, если такого email еще нет, false - если уже есть.
  * @var mysqli $connection Ресурс соединения.

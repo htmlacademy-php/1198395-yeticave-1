@@ -142,8 +142,9 @@ function getDtRange(string $date, DateTime $currentDate): array
  * @param int $code Код ошибки.
  * @param string $message Сообщение ошибки.
  * @param array $cats Категории (необходимы для отображения навигации).
+ * @param array|false $user Информация о пользователе (необходима для шаблона).
  */
-function showError(int $code, string $message, array $cats): void
+function showError(int $code, string $message, array $cats, array|false $user): void
 {
     $errorTitle = 'Ошибка ' . $code;
     $navContent = includeTemplate(
@@ -168,6 +169,7 @@ function showError(int $code, string $message, array $cats): void
             'navContent' => $navContent,
             'pageContent' => $pageContent,
             'pageTitle' => '"Yeticave" - ' . $errorTitle,
+            'user' => $user,
         ],
     );
 

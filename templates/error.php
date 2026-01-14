@@ -1,9 +1,9 @@
 <?php
 
 /**
- * @var $navContent ;
- * @var $errorTitle ;
- * @var $errorMessage ;
+ * @var string $navContent ;
+ * @var string $errorTitle ;
+ * @var string $errorMessage ;
  */
 
 ?>
