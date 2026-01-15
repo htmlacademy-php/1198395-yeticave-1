@@ -47,7 +47,7 @@
         <?php endif ; ?>
     </ul>
     </section>
-    <?php if (!empty($lots) && $pages > 1) : ?>
+    <?php if ($pages > 1) : ?>
     <ul class="pagination-list">
         <li class="pagination-item pagination-item-prev">
             <a href="<?= "/search.php?search=$text&page=" . ($page > 1 ? $page - 1 : $page) ; ?>">Назад</a>
