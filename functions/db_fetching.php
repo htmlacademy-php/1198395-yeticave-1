@@ -220,8 +220,8 @@ function addUser(mysqli $connection, array $formInputs): bool
 /**
  * Создает подготовленное выражение на основе готового SQL запроса и переданных данных
  *
- * @param $link mysqli Ресурс соединения
- * @param $sql string SQL запрос с плейсхолдерами вместо значений
+ * @param mysqli $link Ресурс соединения
+ * @param string $sql  SQL запрос с плейсхолдерами вместо значений
  * @param array $data Данные для вставки на место плейсхолдеров
  *
  * @return mysqli_stmt Подготовленное выражение
@@ -266,4 +266,47 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
     }
 
     return $stmt;
+}
+
+/**
+ * Получает общее количество найденных активных лотов, подходящих под запрос.
+ * @param mysqli $connection Ресурс соединения.
+ * @param string $text Текст запроса.
+ * @return int Количество лотов.
+ */
+function getLotsAmount(mysqli $connection, string $text): int
+{
+    $query = 'SELECT COUNT(lots.id) AS amount FROM lots WHERE MATCH lots.name, lots.description AGAINST (?) AND lots.date_exp > CURDATE()';
+
+    $stmt = dbGetPrepareStmt($connection, $query, [ $text ]);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    $result = mysqli_fetch_assoc($result);
+
+    return (int)$result['amount'];
+}
+
+/**
+ * Выполняет поиск лотов по запросу.
+ * @param mysqli $connection Ресурс соединения.
+ * @param string $text Текст запроса.
+ * @param int $page Текущая страница пагинации.
+ * @param int $limit Количество лотов на одной странице.
+ * @return array Найденные лоты.
+ */
+function search(mysqli $connection, string $text, int $page, int $limit): array
+{
+    $offset = ($page - 1) * $limit;
+    $query = 'SELECT lots.*, cats.name AS category FROM lots'
+            . ' JOIN cats ON lots.cat_id = cats.id WHERE MATCH lots.name, lots.description AGAINST (?)'
+            . ' AND lots.date_exp > CURDATE() ORDER BY lots.created_at DESC LIMIT '
+            . $limit . ' OFFSET ' . $offset;
+
+    $stmt = dbGetPrepareStmt($connection, $query, [ $text ]);
+    mysqli_stmt_execute($stmt);
+
+    $result = mysqli_stmt_get_result($stmt);
+    $result = mysqli_fetch_all($result, MYSQLI_ASSOC);
+
+    return $result;
 }

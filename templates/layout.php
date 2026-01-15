@@ -5,6 +5,7 @@
  * @var string $pageContent ;
  * @var string $navContent ;
  * @var array|false $user ;
+ * @var string $search ;
  */
 
 ?>
@@ -26,8 +27,8 @@
             <a class="main-header__logo" href="/index.php">
                 <img src="/img/logo.svg" width="160" height="39" alt="Логотип компании YetiCave">
             </a>
-            <form class="main-header__search" method="get" action="https://echo.htmlacademy.ru" autocomplete="off">
-                <input type="search" name="search" placeholder="Поиск лота">
+            <form class="main-header__search" method="get" action="/search.php" autocomplete="off">
+                <input type="search" name="search" placeholder="Поиск лота" value="<?= isset($search) ? htmlspecialchars($search) : '' ; ?>">
                 <input class="main-header__search-btn" type="submit" name="find" value="Найти">
             </form>
             <a class="main-header__add-lot button" href="/add.php">Добавить лот</a>

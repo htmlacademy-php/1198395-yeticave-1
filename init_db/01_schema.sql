@@ -55,3 +55,5 @@ CREATE INDEX u_email ON users (email);
 CREATE INDEX l_date ON lots (created_at);
 CREATE INDEX l_name ON lots (name);
 CREATE INDEX b_date ON bids (created_at);
+
+CREATE FULLTEXT INDEX search ON lots (name, description);

@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($uploadStatus['success']) {
             $formInputs['lot-img'] = $uploadStatus['imgPath'];
-            $formInputs['userId'] = $_SESSION['user']['id'];
+            $formInputs['userId'] = $user['id'];
             $lotId = addLot($connection, $formInputs);
 
             if ($lotId === false) {
