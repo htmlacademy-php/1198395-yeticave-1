@@ -124,6 +124,13 @@ function validateFormAddLot(array $formInputs, array $cats): array
     return validateForm($formInputs, $rules);
 }
 
+/**
+ * Принимает данные формы добавления ставки, проверяет их и собирает ошибки в массив.
+ * @param array $formInputs Массив данных из формы.
+ * @param int $minBid Минимальная ставка.
+ *
+ * @return array Массив выявленных ошибок в форме.
+ */
 function validateFormBids(array $formInputs, int $minBid): array
 {
     $rules =

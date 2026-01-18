@@ -7,6 +7,10 @@ require_once __DIR__ . '/init.php';
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $validateFormAddLot ;
+ * @var $getAuthUser ;
+ * @var $uploadImg ;
+ * @var $addLot ;
+ * @var $showError ;
  */
 
 $cats = getAllCats($connection);

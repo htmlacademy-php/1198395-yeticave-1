@@ -9,6 +9,8 @@ require_once __DIR__ . '/init.php';
  * @var $authUser ;
  * @var $getUser ;
  * @var $validateFormLogin ;
+ * @var $getAuthUser ;
+ * @var $showError ;
  */
 
 $cats = getAllCats($connection);

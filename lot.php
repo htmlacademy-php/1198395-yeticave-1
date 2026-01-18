@@ -6,9 +6,12 @@ require_once __DIR__ . '/init.php';
  * @var $connection ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
- * @var $getBidsByLotId ;
+ * @var $getBidsByLot ;
  * @var $validateFormBids ;
  * @var $addBid ;
+ * @var $getAuthUser ;
+ * @var $showError ;
+ * @var $showBids ;
  */
 
 $cats = getAllCats($connection);
@@ -43,10 +46,7 @@ if ($user !== false && $_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$showBids = $user !== false && $lot['date_exp'] < new DateTime() && (int)$user['id'] !== (int)$lot['user_id'];
-if (isset($bids[0])) {
-    $showBids = $showBids && (int)$user['id'] !== (int)$bids[0]['user_id'];
-}
+$showBids = showBids($user, $lot, $bids);
 
 $navContent = includeTemplate(
     'nav.php',

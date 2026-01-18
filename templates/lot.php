@@ -31,9 +31,11 @@
                 <p class="lot-item__description"><?= $lot['description']; ?></p>
             </div>
             <div class="lot-item__right">
-                <?php if ($showBids): ?>
                 <div class="lot-item__state">
                     <?php [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime()); ?>
+                    <?php if ($hours === '00' && $minutes === '00' || isset($lot['winner_id'])) : ?>
+                    <p>Торги окончены.</p>
+                    <?php else : ?>
                     <div class="lot-item__timer <?= (int)$hours === 0 ? 'timer--finishing' : ''; ?>  timer">
                         <?= $hours; ?>:<?= $minutes; ?>
                     </div>
@@ -46,6 +48,8 @@
                             Мин. ставка <span><?= formatPrice($minBid); ?></span>
                         </div>
                     </div>
+                    <?php endif ; ?>
+                    <?php if ($showBids): ?>
                     <form
                         class="lot-item__form"
                         action="/lot.php?id=<?= $lot['id'] ; ?>"
@@ -62,8 +66,8 @@
                         </p>
                         <button type="submit" class="button">Сделать ставку</button>
                     </form>
+                    <?php endif ; ?>
                 </div>
-                <?php endif ; ?>
                 <div class="history">
                     <h3>История ставок (<span><?= count($bids); ?></span>)</h3>
                     <table class="history__list">

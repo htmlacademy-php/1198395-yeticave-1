@@ -7,6 +7,9 @@ require_once __DIR__ . '/init.php';
  * @var $getAllCats ;
  * @var $includeTemplate ;
  * @var $getBidsByLotId ;
+ * @var $getAuthUser ;
+ * @var $getLotsAmount ;
+ * @var $search ;
  */
 
 $cats = getAllCats($connection);

@@ -7,6 +7,7 @@ require_once __DIR__ . '/init.php';
  * @var $getRecentLots ;
  * @var $getAllCats ;
  * @var $includeTemplate ;
+ * @var $getAuthUser ;
  */
 
 $lots = getRecentLots($connection);

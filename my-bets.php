@@ -8,10 +8,15 @@ require_once __DIR__ . '/init.php';
  * @var $includeTemplate ;
  * @var $getAuthUser ;
  * @var $getUserBids ;
+ * @var $showError ;
  */
 
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
+
+if ($user === false) {
+    showError(403, 'Войдите, чтобы посмотреть свои ставки.', $cats, $user);
+}
 
 $bids = getUserBids($connection, $user['id']);
 
