@@ -8,7 +8,6 @@ require_once __DIR__ . '/init.php';
  * @var $includeTemplate ;
  * @var $getBidsByLotId ;
  * @var $getAuthUser ;
- * @var $getLotsAmount ;
  * @var $search ;
  */
 
@@ -18,14 +17,23 @@ $user = getAuthUser($connection);
 $text = filter_input(INPUT_GET, 'search', FILTER_SANITIZE_SPECIAL_CHARS);
 $text = $text ? trim($text) : '';
 
-if (empty($text)) {
+$catId = filter_input(INPUT_GET, 'cat', FILTER_VALIDATE_INT);
+$isCatValid = false;
+$catName = null;
+
+foreach ($cats as $cat) {
+    if ((int)$cat['id'] === (int)$catId) {
+        $isCatValid = true;
+        $catName = $cat['name'];
+    }
+}
+
+if (empty($text) && !$isCatValid) {
     header('Location:/');
     exit();
 }
 
 $lotsPerPage = 9;
-$lotsAmount = getLotsAmount($connection, $text);
-$pages = (int)ceil($lotsAmount / $lotsPerPage);
 
 $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT);
 
@@ -33,7 +41,10 @@ if (!$page || $page < 1 || $page > $pages) {
     $page = 1;
 }
 
-$lots = search($connection, $text, $page, $lotsPerPage);
+$searchInfo = search($connection, $text, $catId, $lotsPerPage, $page);
+
+$pages = $searchInfo['pages'];
+$lots = $searchInfo['lots'];
 
 $navContent = includeTemplate(
     'nav.php',
@@ -50,6 +61,7 @@ $pageContent = includeTemplate(
         'lots' => $lots,
         'pages' => $pages,
         'page' => $page,
+        'catName' => $catName,
     ],
 );
 
