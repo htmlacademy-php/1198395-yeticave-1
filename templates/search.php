@@ -2,11 +2,10 @@
 
 /**
  * @var string $navContent ;
- * @var string $text ;
+ * @var string $searchInfo ;
  * @var array $lots ;
  * @var int $pages ;
  * @var int $page ;
- * @var string $catName ;
  */
 
 ?>
@@ -14,10 +13,12 @@
 <?= $navContent ; ?>
 <div class="container">
     <section class="lots">
-    <?php if (isset($catName)) : ?>
-    <h2>Все лоты в категории «<?= $catName ?>»</h2>
+    <?php if ($searchInfo['isCatValid'] && $searchInfo['isTextValid']) : ?>
+    <h2>Все лоты в категории «<?= $searchInfo['catName'] ?>» по запросу «<span><?= htmlspecialchars($searchInfo['text']) ; ?></span>»</h2>
+    <?php elseif ($searchInfo['isCatValid']) : ?>
+    <h2>Все лоты в категории «<?= $searchInfo['catName'] ?>»</h2>
     <?php else : ?>
-    <h2>Результаты поиска по запросу «<span><?= $text !== false ? htmlspecialchars($text) : '' ; ?></span>»</h2>
+    <h2>Результаты поиска по запросу «<span><?= htmlspecialchars($searchInfo['text']) ; ?></span>»</h2>
     <?php endif ; ?>
     <ul class="lots__list">
         <?php if (empty($lots)) : ?>

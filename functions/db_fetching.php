@@ -268,14 +268,14 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
  * Получает общее количество найденных активных лотов, подходящих под запрос.
  * @param mysqli $connection Ресурс соединения.
  * @param string $searchQuery Запрос.
- * @param string|int $value Значение запроса. Либо текст, либо id категории.
+ * @param array $value Значение запроса.
  * @return int Количество лотов.
  */
-function getLotsAmount(mysqli $connection, string $searchQuery, string|int $value): int
+function getLotsAmount(mysqli $connection, string $searchQuery, array $values): int
 {
     $query = 'SELECT COUNT(lots.id) AS amount FROM lots WHERE ' . $searchQuery . ' AND lots.date_exp > CURDATE()';
 
-    $stmt = dbGetPrepareStmt($connection, $query, [ $value ]);
+    $stmt = dbGetPrepareStmt($connection, $query, $values);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
@@ -284,23 +284,42 @@ function getLotsAmount(mysqli $connection, string $searchQuery, string|int $valu
 }
 
 /**
- * Выполняет поиск лотов по запросу. Если передаётся категория, то ищет активные лоты в этой категории.
- * Иначе ищет по словам из строки запроса.
+ * Выполняет поиск лотов по запросу.
  * @param mysqli $connection Ресурс соединения.
- * @param string $text Текст запроса.
- * @param int|null $catId Id категории.
- * @param int $page Текущая страница пагинации.
+ * @param array $searchInfo Поисковая информация, полученная при валидации запроса.
+ * @param int|false $page Запрашиваемая страница пагинации.
  * @param int $limit Количество лотов на одной странице.
  * @return array Общее количество страниц и найденные лоты для переданной страницы.
  */
-function search(mysqli $connection, string $text, int|null $catId, int $limit, int $page): array
+function search(mysqli $connection, array $searchInfo, int $limit, int|false $page): array
 {
-    $searchQuery = $catId === null ? 'MATCH lots.name, lots.description AGAINST (?)' : 'lots.cat_id = ?';
-    $value = $catId ?? $text;
+    $textQuery = 'MATCH lots.name, lots.description AGAINST (?)';
+    $catQuery = 'lots.cat_id = ?';
 
-    $lotsAmount = getLotsAmount($connection, $searchQuery, $value);
+    if ($searchInfo['isTextValid'] && $searchInfo['isCatValid']) {
+        $searchQuery = $catQuery . ' AND ' . $textQuery;
+        $values =
+            [
+                $searchInfo['catId'],
+                $searchInfo['text'],
+            ];
+    } elseif ($searchInfo['isTextValid']) {
+        $searchQuery = $textQuery;
+        $values = [ $searchInfo['text'] ];
+    } elseif ($searchInfo['isCatValid']) {
+        $searchQuery = $catQuery;
+        $values = [ $searchInfo['catId'] ];
+    } else {
+        return [];
+    }
+
+    $lotsAmount = getLotsAmount($connection, $searchQuery, $values);
 
     $pages = (int)ceil($lotsAmount / $limit);
+
+    if (!$page || $page < 1 || $page > $pages) {
+        $page = 1;
+    }
 
     $offset = ($page - 1) * $limit;
     $query = 'SELECT lots.*, cats.name AS category FROM lots'
@@ -308,7 +327,7 @@ function search(mysqli $connection, string $text, int|null $catId, int $limit, i
             . ' AND lots.date_exp > CURDATE() ORDER BY lots.created_at DESC LIMIT '
             . $limit . ' OFFSET ' . $offset;
 
-    $stmt = dbGetPrepareStmt($connection, $query, [ $value ]);
+    $stmt = dbGetPrepareStmt($connection, $query, $values);
     mysqli_stmt_execute($stmt);
 
     $lots = mysqli_stmt_get_result($stmt);
