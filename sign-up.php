@@ -19,6 +19,9 @@ if ($user !== false) {
     showError(403, 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта', $cats, $user);
 }
 
+$formInputs = [];
+$errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
 
@@ -46,8 +49,8 @@ $pageContent = includeTemplate(
     'sign-up.php',
     [
         'navContent' => $navContent,
-        'formInputs' => $formInputs ?? [],
-        'errors' => $errors ?? [],
+        'formInputs' => $formInputs,
+        'errors' => $errors,
     ],
 );
 

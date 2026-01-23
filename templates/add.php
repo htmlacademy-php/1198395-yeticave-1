@@ -26,7 +26,7 @@
                     <option>Выберите категорию</option>
                     <?php foreach ($cats as $category) : ?>
                         <option
-                            value="<?= $category['id']; ?>" <?= isset($formInputs['category']) && $formInputs['category'] === $category['id'] ? 'selected' : ''; ?>>
+                            value="<?= $category['id'] ?? 1; ?>" <?= isset($formInputs['category'], $category['id']) && $formInputs['category'] === $category['id'] ? 'selected' : ''; ?>>
                             <?= $category['name'] ?? ''; ?>
                         </option>
                     <?php endforeach; ?>

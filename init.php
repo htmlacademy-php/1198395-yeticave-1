@@ -16,4 +16,8 @@ if (!file_exists(__DIR__ . '/config.php')) {
 }
 $config = require __DIR__ . '/config.php';
 
+if (!isset($config['db'])) {
+    exit('Ошибка конфигурации db: отсутствует необходимый ключ.');
+}
+
 $connection = createConnection($config['db']);

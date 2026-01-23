@@ -34,7 +34,7 @@
             <a class="main-header__add-lot button" href="/add.php">Добавить лот</a>
 
             <nav class="user-menu">
-                <?php if ($user !== false) : ?>
+                <?php if ($user !== false && isset($user['name'])) : ?>
                     <div class="user-menu__logged">
                         <p><?= $user['name']; ?></p>
                         <a class="user-menu__bets" href="/my-bets.php">Мои ставки</a>

@@ -1,0 +1,7 @@
+{
+    "name": "yeticave/yeticave",
+    "type": "project",
+    "require": {
+        "symfony/mailer": "*"
+    }
+}

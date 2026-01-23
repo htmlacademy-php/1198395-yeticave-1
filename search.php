@@ -30,8 +30,8 @@ $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?? false;
 
 $searchResult = search($connection, $searchInfo, $lotsPerPage, $page);
 
-$pages = $searchResult['pages'];
-$lots = $searchResult['lots'];
+$pages = $searchResult['pages'] ?? 0;
+$lots = $searchResult['lots'] ?? [];
 
 $navContent = includeTemplate(
     'nav.php',

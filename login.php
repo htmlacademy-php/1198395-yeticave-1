@@ -20,17 +20,20 @@ if ($user !== false) {
     showError(403, 'Вы уже выполнили вход на сайт', $cats, $user);
 }
 
+$formInputs = [];
+$errors = [];
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
     $validStatus = validateFormLogin($formInputs, $connection);
 
-    if ($validStatus['success']) {
+    if (isset($validStatus['success'], $validStatus['user']) && $validStatus['success']) {
         $_SESSION['user'] = $validStatus['user'];
         header('Location:/');
         exit();
     }
 
-    $errors = $validStatus['errors'];
+    $errors = $validStatus['errors'] ?? [];
 }
 
 $navContent = includeTemplate(
@@ -44,8 +47,8 @@ $pageContent = includeTemplate(
     'login.php',
     [
         'navContent' => $navContent,
-        'formInputs' => $formInputs ?? [],
-        'errors' => $errors ?? [],
+        'formInputs' => $formInputs,
+        'errors' => $errors,
     ],
 );
 

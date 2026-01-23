@@ -183,13 +183,20 @@ function showError(int $code, string $message, array $cats, array|false $user): 
  * @param array|false $user Залогинен ли пользователь. Если нет, ставки не показываются.
  * @param array $lot Информация о лоте. Если истек срок ставок или лот уже был выигран, ставки не показываются.
  * @param array $bids Информация о ставках. Если последняя ставка была сделана залогиненым пользователем, ставки не показываются.
+ * @return bool `true` - показывать ставки, `false` - нет.
  */
 function showBids(array|false $user, array $lot, array $bids)
 {
+    if (!isset($lot['date_exp'], $lot['user_id'])) {
+        error_log('Нет необходимых ключей в переданном массиве lot');
+        return false;
+    }
+
     [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime());
     $isExp = $hours === '00' && $minutes === '00';
     $result = $user !== false && !$isExp && (int)$user['id'] !== (int)$lot['user_id'] && !isset($lot['winner_id']);
-    if (isset($bids[0])) {
+
+    if (isset($bids[0], $bids[0]['user_id'])) {
         $result = $result && (int)$user['id'] !== (int)$bids[0]['user_id'];
     }
 

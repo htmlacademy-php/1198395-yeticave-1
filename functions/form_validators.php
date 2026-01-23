@@ -12,10 +12,10 @@ function validateSearch(string|false $text, string|false $catId, array $cats): a
     $result =
     [
         'isTextValid' => false,
-        'text' => null,
+        'text' => '',
         'isCatValid' => false,
-        'catName' => null,
-        'catId' => null,
+        'catName' => '',
+        'catId' => 0,
     ];
 
     $text = $text ? trim($text) : '';
@@ -54,6 +54,7 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
         [
             'success' => false,
             'user' => [],
+            'errors' => [],
         ];
 
     $rules =
@@ -68,7 +69,7 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
 
     $result['errors'] = validateForm($formInputs, $rules);
 
-    if (!empty($result['errors'])) {
+    if (!empty($result['errors']) || !isset($formInputs['email'], $formInputs['password'])) {
         return $result;
     }
 

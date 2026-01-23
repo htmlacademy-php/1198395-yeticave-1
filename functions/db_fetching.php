@@ -8,6 +8,10 @@
  */
 function createConnection(array $config): mysqli
 {
+    if (!isset($config['host'], $config['user'], $config['password'], $config['database'])) {
+        exit('Ошибка конфигурации БД.');
+    }
+
     try {
         $connection = mysqli_connect($config['host'], $config['user'], $config['password'], $config['database']);
     } catch (Throwable $e) {
@@ -166,7 +170,7 @@ function getUser(mysqli $connection, string $email): array|false
  */
 function getAuthUser(mysqli $connection): array|false
 {
-    if (!isset($_SESSION['user'])) {
+    if (!isset($_SESSION['user'], $_SESSION['user']['email'])) {
         return false;
     }
 
@@ -207,6 +211,11 @@ function isEmailUnique(mysqli $connection, string $email): bool
 function addUser(mysqli $connection, array $formInputs): bool
 {
     $query = 'INSERT INTO users (email, password, name, contacts) VALUES (?, ?, ?, ?)';
+
+    if (!isset($formInputs['password'])) {
+        return false;
+    }
+
     $formInputs['password'] = password_hash($formInputs['password'], PASSWORD_DEFAULT);
 
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
@@ -271,7 +280,7 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
  * @param array $value Значение запроса.
  * @return int Количество лотов.
  */
-function getLotsAmount(mysqli $connection, string $searchQuery, array $values): int
+function getMatchedLotsCount(mysqli $connection, string $searchQuery, array $values): int
 {
     $query = 'SELECT COUNT(lots.id) AS amount FROM lots WHERE ' . $searchQuery . ' AND lots.date_exp > CURDATE()';
 
@@ -279,6 +288,10 @@ function getLotsAmount(mysqli $connection, string $searchQuery, array $values): 
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
+
+    if (!isset($result['amount'])) {
+        return 0;
+    }
 
     return (int)$result['amount'];
 }
@@ -296,28 +309,43 @@ function search(mysqli $connection, array $searchInfo, int $limit, int|false $pa
     $textQuery = 'MATCH lots.name, lots.description AGAINST (?)';
     $catQuery = 'lots.cat_id = ?';
 
-    if ($searchInfo['isTextValid'] && $searchInfo['isCatValid']) {
-        $searchQuery = $catQuery . ' AND ' . $textQuery;
-        $values =
-            [
-                $searchInfo['catId'],
-                $searchInfo['text'],
-            ];
-    } elseif ($searchInfo['isTextValid']) {
-        $searchQuery = $textQuery;
-        $values = [ $searchInfo['text'] ];
-    } elseif ($searchInfo['isCatValid']) {
-        $searchQuery = $catQuery;
-        $values = [ $searchInfo['catId'] ];
-    } else {
-        return [];
+    $result =
+        [
+            'pages' => 0,
+            'lots' => [],
+        ];
+
+    if (!isset($searchInfo['isTextValid'], $searchInfo['isCatValid'], $searchInfo['catId'], $searchInfo['text'])) {
+        error_log('Отсутствуют необходимые ключи в массиве $searchInfo');
+        return $result;
     }
 
-    $lotsAmount = getLotsAmount($connection, $searchQuery, $values);
+    switch (true) {
+        case $searchInfo['isTextValid'] && $searchInfo['isCatValid']:
+            $searchQuery = $catQuery . ' AND ' . $textQuery;
+            $values =
+                [
+                    $searchInfo['catId'],
+                    $searchInfo['text'],
+                ];
+            break;
+        case $searchInfo['isTextValid']:
+            $searchQuery = $textQuery;
+            $values = [ $searchInfo['text'] ];
+            break;
+        case $searchInfo['isCatValid']:
+            $searchQuery = $catQuery;
+            $values = [ $searchInfo['catId'] ];
+            break;
+        default:
+            return $result;
+    }
 
-    $pages = (int)ceil($lotsAmount / $limit);
+    $lotsCount = getMatchedLotsCount($connection, $searchQuery, $values);
 
-    if (!$page || $page < 1 || $page > $pages) {
+    $result['pages'] = (int)ceil($lotsCount / $limit);
+
+    if (!$page || $page < 1 || $page > $result['pages']) {
         $page = 1;
     }
 
@@ -331,13 +359,9 @@ function search(mysqli $connection, array $searchInfo, int $limit, int|false $pa
     mysqli_stmt_execute($stmt);
 
     $lots = mysqli_stmt_get_result($stmt);
-    $lots = mysqli_fetch_all($lots, MYSQLI_ASSOC);
+    $result['lots'] = mysqli_fetch_all($lots, MYSQLI_ASSOC);
 
-    return
-    [
-        'pages' => $pages,
-        'lots' => $lots,
-    ];
+    return $result;
 }
 
 /**
@@ -367,4 +391,34 @@ function getUserBids(mysqli $connection, int $id): array
             . 'JOIN users ON users.id = lots.user_id WHERE bids.user_id = ' . $id . ' '
             . 'ORDER BY bids.created_at DESC';
     return getData($connection, $query);
+}
+
+/**
+ * Получает массив из истекших по времени лотов, на которые делались ставки и у которых не определен победитель.
+ * Также получает Id пользователя, сделавшего наибольшую ставку на лот.
+ * @param mysqli $connection Ресурс соединения.
+ * @return array Массив из лотов и id пользователя с наибольшей ставкой.
+ */
+function getExpiredLots(mysqli $connection): array
+{
+    $query = 'SELECT lots.id, lots.name, bids.user_id, users.email, users.name AS userName '
+            . 'FROM lots JOIN bids ON lots.id = bids.lot_id JOIN users ON bids.user_id = users.id '
+            . 'WHERE CURDATE() >= lots.date_exp AND lots.winner_id IS NULL '
+            . 'AND bids.amount = (SELECT MAX(bids.amount) FROM bids WHERE bids.lot_id = lots.id)';
+    return getData($connection, $query);
+}
+
+/**
+ * Назначает победителя для лота.
+ * @param mysqli $connection Ресурс соединения.
+ * @param int $lot_id Id лота.
+ * @param int $user_id Id победителя.
+ * @return bool Успешно ли обновились данные о лоте.
+ */
+function setLotWinner(mysqli $connection, int $lot_id, int $user_id): bool
+{
+    $query = 'UPDATE lots SET lots.winner_id = ? WHERE lots.id = ?';
+
+    $stmt = dbGetPrepareStmt($connection, $query, [ $user_id, $lot_id ]);
+    return mysqli_stmt_execute($stmt);
 }
