@@ -2,11 +2,15 @@
 
 require_once __DIR__ . '/init.php';
 
+/**
+ * @var $connection ;
+ */
+
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
 if ($user === false) {
-    showError(403, 'Войдите на сайт, чтобы добавить свой лот', $cats, $user);
+    showError(403, 'Войдите на сайт, чтобы добавить свой лот', $cats, false);
 }
 
 $formInputs = [];

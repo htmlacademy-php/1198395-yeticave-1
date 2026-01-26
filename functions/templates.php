@@ -1,5 +1,7 @@
 <?php
 
+use JetBrains\PhpStorm\NoReturn;
+
 /**
  * Возвращает корректную форму множественного числа
  * Ограничения: только для целых чисел
@@ -40,7 +42,7 @@ function getNounPluralForm(int $number, string $one, string $two, string $many):
  * в разном формате:
  *  - больше суток - дату и время создания
  *  - меньше часа - количество прошедших минут
- *  - больше часа  - количество часов
+ *  - больше часа - количество часов
  * @param string $date Дата в строковом формате (ГГГГ-ММ-ДД)
  * @param DateTime $currentDate Текущая дата
  *
@@ -62,11 +64,11 @@ function getTimePassedAfterDate(string $date, DateTime $currentDate): string
         $dateDiff->h === 1 => 'Час назад',
         $dateDiff->i === 1 => 'Минуту назад',
         $dateDiff->h < 1 => $dateDiff->i . ' ' . getNounPluralForm(
-            $dateDiff->i,
-            'минуту',
-            'минуты',
-            'минут',
-        ) . ' назад',
+                $dateDiff->i,
+                'минуту',
+                'минуты',
+                'минут',
+            ) . ' назад',
         default => $dateDiff->h . ' ' . getNounPluralForm($dateDiff->h, 'час', 'часа', 'часов') . ' назад',
     };
 }
@@ -104,7 +106,7 @@ function formatPrice(int $price): string
         $price > 1000
             ? number_format($price, 0, '', ' ')
             : $price
-    )
+        )
         . '<b class="rub">р</b>';
 }
 
@@ -144,6 +146,7 @@ function getDtRange(string $date, DateTime $currentDate): array
  * @param array $cats Категории (необходимы для отображения навигации).
  * @param array|false $user Информация о пользователе (необходима для шаблона).
  */
+#[NoReturn]
 function showError(int $code, string $message, array $cats, array|false $user): void
 {
     $errorTitle = 'Ошибка ' . $code;
@@ -185,7 +188,7 @@ function showError(int $code, string $message, array $cats, array|false $user): 
  * @param array $bids Информация о ставках. Если последняя ставка была сделана залогиненым пользователем, ставки не показываются.
  * @return bool `true` - показывать ставки, `false` - нет.
  */
-function showBids(array|false $user, array $lot, array $bids)
+function showBids(array|false $user, array $lot, array $bids): bool
 {
     if (!isset($lot['date_exp'], $lot['user_id'])) {
         error_log('Нет необходимых ключей в переданном массиве lot');

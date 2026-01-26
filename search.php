@@ -2,6 +2,11 @@
 
 require_once __DIR__ . '/init.php';
 
+/**
+ * @var $connection ;
+ * @var array $config ;
+ */
+
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
@@ -14,8 +19,11 @@ if (!$searchInfo['isTextValid'] && !$searchInfo['isCatValid']) {
     header('Location:/');
     exit();
 }
+if (!isset($config['pagination'], $config['pagination']['lots_per_page']) || (int)$config['pagination']['lots_per_page'] < 0) {
+    exit('Ошибка конфигурации pagination: ключ отсутствует или меньше нуля.');
+}
 
-$lotsPerPage = 9;
+$lotsPerPage = $config['pagination']['lots_per_page'];
 
 $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?? false;
 

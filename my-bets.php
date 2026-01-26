@@ -2,6 +2,10 @@
 
 require_once __DIR__ . '/init.php';
 
+/**
+ * @var $connection ;
+ */
+
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
@@ -35,7 +39,6 @@ if ($user !== false && isset($user['id'])) {
     );
 
     print($layoutContent);
-
 } else {
     showError(403, 'Войдите, чтобы посмотреть свои ставки.', $cats, $user);
 }

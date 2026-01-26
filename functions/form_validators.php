@@ -10,13 +10,13 @@
 function validateSearch(string|false $text, int|false $catId, array $cats): array
 {
     $result =
-    [
-        'isTextValid' => false,
-        'text' => '',
-        'isCatValid' => false,
-        'catName' => '',
-        'catId' => 0,
-    ];
+        [
+            'isTextValid' => false,
+            'text' => '',
+            'isCatValid' => false,
+            'catName' => '',
+            'catId' => 0,
+        ];
 
     $text = $text ? trim($text) : '';
 
@@ -27,10 +27,10 @@ function validateSearch(string|false $text, int|false $catId, array $cats): arra
 
     if ($catId) {
         foreach ($cats as $cat) {
-            if ((int)$cat['id'] === (int)$catId) {
+            if ((int)$cat['id'] === $catId) {
                 $result['isCatValid'] = true;
                 $result['catName'] = $cat['name'];
-                $result['catId'] = (int)$catId;
+                $result['catId'] = $catId;
             }
         }
     }
@@ -54,7 +54,6 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
         [
             'success' => false,
             'user' => [],
-            'errors' => [],
         ];
 
     $rules =

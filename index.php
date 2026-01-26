@@ -1,7 +1,11 @@
 <?php
 
 require_once __DIR__ . '/init.php';
-require_once __DIR__ .'/getWinner.php';
+require_once __DIR__ . '/getWinner.php';
+
+/**
+ * @var $connection ;
+ */
 
 $lots = getRecentLots($connection);
 $cats = getAllCats($connection);

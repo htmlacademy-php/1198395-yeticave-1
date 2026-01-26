@@ -10,6 +10,8 @@ require_once __DIR__ . '/functions/templates.php';
 require_once __DIR__ . '/functions/db_fetching.php';
 require_once __DIR__ . '/functions/form_validators.php';
 require_once __DIR__ . '/functions/files.php';
+require_once __DIR__ . '/functions/auth.php';
+require __DIR__ . '/vendor/autoload.php';
 
 if (!file_exists(__DIR__ . '/config.php')) {
     exit('Файл конфигурации отсутствует.');

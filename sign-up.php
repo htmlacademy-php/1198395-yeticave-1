@@ -2,6 +2,10 @@
 
 require_once __DIR__ . '/init.php';
 
+/**
+ * @var $connection ;
+ */
+
 $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
