@@ -18,7 +18,7 @@ $cats = getAllCats($connection);
 $lotId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $user = getAuthUser($connection);
 
-if (!$lotId || !$lot = getLotById($connection, $lotId) || !isset($lot['price'], $lot['bid_step'])) {
+if (!$lotId || (!$lot = getLotById($connection, $lotId)) || !isset($lot['price'], $lot['bid_step'])) {
     showError(404, 'Данной страницы не существует на сайте.', $cats, $user);
 }
 

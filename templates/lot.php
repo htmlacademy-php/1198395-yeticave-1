@@ -72,6 +72,7 @@
                     <h3>История ставок (<span><?= count($bids); ?></span>)</h3>
                     <table class="history__list">
                         <?php foreach ($bids as $bid) : ?>
+                            <?php if (isset($bid['user_name'], $bid['amount'], $bid['created_at'])) : ?>
                             <tr class="history__item">
                                 <td class="history__name"><?= $bid['user_name']; ?></td>
                                 <td class="history__price"><?= formatPrice($bid['amount']); ?></td>
@@ -80,6 +81,7 @@
                                     new DateTime(),
                                 ); ?></td>
                             </tr>
+                            <?php endif ; ?>
                         <?php endforeach; ?>
                     </table>
                 </div>

@@ -13,11 +13,12 @@
         <h2>Мои ставки</h2>
         <table class="rates__list">
         <?php foreach ($bids as $bid) : ?>
+            <?php if (isset($bid['date_exp'], $user['id'], $bid['img_url'], $bid['name'], $bid['lot_id'], $bid['contacts'], $bid['category'], $bid['amount'], $bid['created_at'])) : ?>
             <?php
             [$hours, $minutes] = getDtRange($bid['date_exp'], new DateTime());
-            $isWinner = (int)$bid['winner_id'] === (int)$user['id'];
-            $isExp = $hours === '00' && $minutes === '00';
-            ?>
+                $isWinner = (int)$bid['winner_id'] === (int)$user['id'];
+                $isExp = $hours === '00' && $minutes === '00';
+                ?>
             <tr class="rates__item 
             <?php if ($isWinner) : ?>
             <?= 'rates__item--win' ; ?>
@@ -63,6 +64,7 @@
                 ); ?>
                 </td>
             </tr>
+            <?php endif ; ?>
         <?php endforeach ; ?>
         </table>
     </section>

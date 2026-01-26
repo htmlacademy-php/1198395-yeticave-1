@@ -13,9 +13,11 @@
             снаряжение.</p>
         <ul class="promo__list">
             <?php foreach ($cats as $cat) : ?>
+                <?php if (isset($cat['class'], $cat['id'], $cat['name'])) : ?>
                 <li class="promo__item promo__item--<?= $cat['class']; ?>">
                     <a class="promo__link" href="/search.php?cat=<?= $cat['id'] ; ?>"><?= $cat['name']; ?></a>
                 </li>
+                <?php endif ; ?>
             <?php endforeach; ?>
         </ul>
     </section>
@@ -25,6 +27,7 @@
         </div>
         <ul class="lots__list">
             <?php foreach ($lots as $lot) : ?>
+                <?php if (isset($lot['img_url'], $lot['category'], $lot['id'], $lot['name'], $lot['price'], $lot['date_exp'])) : ?>
                 <li class="lots__item lot">
                     <div class="lot__image">
                         <img src="<?= htmlspecialchars($lot['img_url']); ?>" width="350" height="260" alt="<?= htmlspecialchars(
@@ -49,6 +52,7 @@
                         </div>
                     </div>
                 </li>
+                <?php endif ; ?>
             <?php endforeach; ?>
         </ul>
     </section>
