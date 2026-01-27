@@ -22,7 +22,7 @@ foreach ($lots as $lot) {
         try {
             sendMessage($mailer, $lot, $config['mailer']);
         } catch (TransportExceptionInterface $e) {
-            error_log('Ошибка при отправке письма');
+            error_log('Ошибка при отправке письма: ' . $e->getMessage());
         }
     } else {
         error_log('Ошибка при сохранении данных');

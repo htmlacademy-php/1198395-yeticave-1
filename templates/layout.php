@@ -24,7 +24,7 @@
     <header class="main-header">
         <div class="main-header__container container">
             <h1 class="visually-hidden">YetiCave</h1>
-            <a class="main-header__logo" href="/index.php">
+            <a class="main-header__logo" href="/">
                 <img src="/img/logo.svg" width="160" height="39" alt="Логотип компании YetiCave">
             </a>
             <form class="main-header__search" method="get" action="/search.php" autocomplete="off">
@@ -44,8 +44,7 @@
                         <a class="user-menu__bets" href="/my-bets.php">Мои ставки</a>
                         <a class="user-menu__logout" href="/logout.php">Выход</a>
                     </div>
-                <?php
-                else : ?>
+                <?php else : ?>
                     <ul class="user-menu__list">
                         <li class="user-menu__item">
                             <a href="/sign-up.php">Регистрация</a>

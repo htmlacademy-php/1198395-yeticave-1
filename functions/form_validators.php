@@ -131,13 +131,17 @@ function validateFormSignUp(array $fromInputs, mysqli $connection): array
 
 /**
  * Принимает данные формы добавления лота, проверяет их и собирает ошибки в массив.
- * @param array $formInputs Массив данных из формы.
- * @param array $cats Данные о категориях, существующих на сервере.
+ * @param array $formInputs Данные из формы.
+ * @param array $cats Массив с существующими категориями на сервере.
  *
- * @return array Массив выявленных ошибок в форме.
+ * @return array|false `array` Массив выявленных ошибок в форме или `false` при пустых данных формы.
  */
-function validateFormAddLot(array $formInputs, array $cats): array
+function validateFormAddLot(array|false|null $formInputs, array $cats): array|false
 {
+    if (empty($formInputs)) {
+        return false;
+    }
+
     $rules =
         [
             'lot-name' => function ($value) {

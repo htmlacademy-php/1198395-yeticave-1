@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Получает список из 6 недавно добавленных лотов, у которых не истек срок торгов (lot.date_exp).
+ * Получает список из 9 недавно добавленных лотов, у которых не истек срок торгов (lot.date_exp).
  * @param mysqli $connection Готовое соединение.
  *
  * @return array Массив с лотами.
@@ -11,6 +11,7 @@ function getRecentLots(mysqli $connection): array
     $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `cats`.`name` AS `category` '
         . 'FROM `lots` JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'WHERE `lots`.`date_exp` > CURDATE() '
+        . 'AND `lots`.`winner_id` IS NULL '
         . 'ORDER BY `lots`.`created_at` DESC LIMIT 9';
 
     return getData($connection, $query);
@@ -32,16 +33,16 @@ function getAllCats(mysqli $connection): array
 /**
  * Получает данные об одном лоте по его id и возвращает их в виде массива. Завершает сценарий при ошибке.
  * @param mysqli $connection Готовое соединение.
- * @param int $id Id лота.
+ * @param int $lotId Id лота.
  *
  * @return array|false Данные из БД в виде массива.
  */
-function getLotById(mysqli $connection, int $id): array|false
+function getLotById(mysqli $connection, int $lotId): array|false
 {
-    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `lots`.`description`, `lots`.`winner_id`, `cats`.`name` AS `category`, MAX(`bids`.`amount`) AS `max_price` '
+    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `lots`.`description`, `lots`.`winner_id`, `lots`.`bid_step`, `lots`.`user_id`, `cats`.`name` AS `category`, MAX(`bids`.`amount`) AS `max_price` '
         . 'FROM `lots` JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'LEFT JOIN `bids` ON `lots`.`id` = `bids`.`lot_id` '
-        . 'WHERE `lots`.`id` = ' . $id . ' '
+        . 'WHERE `lots`.`id` = ' . $lotId . ' '
         . 'GROUP BY `lots`.`id`';
 
     $result = mysqli_query($connection, $query);
@@ -114,7 +115,7 @@ function addLot(mysqli $connection, array $formInputs): int|false
  * @param mysqli $connection Ресурс соединения.
  * @param string $email Строка с email.
  *
- * @return array|false Данные о пользователе или false, если пользователь не найден.
+ * @return array|false Данные о пользователе или `false`, если пользователь не найден, или произошла ошибка при получении данных.
  */
 function getUser(mysqli $connection, string $email): array|false
 {
@@ -126,6 +127,10 @@ function getUser(mysqli $connection, string $email): array|false
     }
 
     $result = mysqli_stmt_get_result($stmt);
+
+    if (!$result) {
+        return false;
+    }
 
     return mysqli_fetch_assoc($result) ?? false;
 }
@@ -142,12 +147,17 @@ function isEmailUnique(mysqli $connection, string $email): bool
 
     $stmt = dbGetPrepareStmt($connection, $query, [$email]);
 
-    if (!mysqli_stmt_execute($stmt)) {
-        return false;
+    if (!mysqli_stmt_execute($stmt) || !$result = mysqli_stmt_get_result($stmt)) {
+        error_log(mysqli_error($connection));
+        exit('Ошибка при получении данных об email.');
     }
 
-    $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
+
+    if (!isset($result['is_unique'])) {
+        error_log(mysqli_error($connection));
+        exit('Ошибка при получении данных об email.');
+    }
 
     return (int)$result['is_unique'] === 0;
 }
@@ -235,11 +245,10 @@ function getMatchedLotsCount(mysqli $connection, string $searchQuery, array $val
 
     $stmt = dbGetPrepareStmt($connection, $query, $values);
 
-    if (!mysqli_stmt_execute($stmt)) {
+    if (!mysqli_stmt_execute($stmt) || !$result = mysqli_stmt_get_result($stmt)) {
         return 0;
     }
 
-    $result = mysqli_stmt_get_result($stmt);
     $result = mysqli_fetch_assoc($result);
 
     if (!isset($result['amount'])) {
@@ -305,7 +314,7 @@ function search(mysqli $connection, array $searchInfo, int $lotsPerPage, int|fal
     $offset = ($page - 1) * $lotsPerPage;
     $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `cats`.`name` AS `category` FROM `lots`'
         . ' JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` WHERE ' . $searchQuery
-        . ' AND `lots`.`date_exp` > CURDATE() ORDER BY `lots`.`created_at` DESC LIMIT '
+        . ' AND `lots`.`date_exp` > CURDATE() AND `lots`.`winner_id` IS NULL ORDER BY `lots`.`created_at` DESC LIMIT '
         . $lotsPerPage . ' OFFSET ' . $offset;
 
     $stmt = dbGetPrepareStmt($connection, $query, $values);
@@ -334,15 +343,15 @@ function addBid(mysqli $connection, array $values): bool
 /**
  * Получает ставки пользователя по его id.
  * @param mysqli $connection Ресурс соединения.
- * @param int $id Id пользователя.
+ * @param int $userId Id пользователя.
  * @return array Массив с информацией о ставках.
  */
-function getUserBids(mysqli $connection, int $id): array
+function getUserBids(mysqli $connection, int $userId): array
 {
     $query = 'SELECT `bids`.`id`, `bids`.`created_at`, `bids`.`amount`, `bids`.`user_id`, `bids`.`lot_id`, `lots`.`created_at` AS `lot_created`, `lots`.`name`, `lots`.`img_url`, `lots`.`date_exp`, `lots`.`winner_id`, `cats`.`name` AS `category`, `users`.`contacts` FROM `bids` '
         . 'JOIN `lots` ON `lots`.`id` = `bids`.`lot_id` '
         . 'JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
-        . 'JOIN `users` ON `users`.`id` = `lots`.`user_id` WHERE `bids`.`user_id` = ' . $id . ' '
+        . 'JOIN `users` ON `users`.`id` = `lots`.`user_id` WHERE `bids`.`user_id` = ' . $userId . ' '
         . 'ORDER BY `bids`.`created_at` DESC';
     return getData($connection, $query);
 }
@@ -365,14 +374,14 @@ function getExpiredLots(mysqli $connection): array
 /**
  * Назначает победителя для лота.
  * @param mysqli $connection Ресурс соединения.
- * @param int $lot_id Id лота.
- * @param int $user_id Id победителя.
+ * @param int $lotId Id лота.
+ * @param int $userId Id победителя.
  * @return bool Успешно ли обновились данные о лоте.
  */
-function setLotWinner(mysqli $connection, int $lot_id, int $user_id): bool
+function setLotWinner(mysqli $connection, int $lotId, int $userId): bool
 {
     $query = 'UPDATE `lots` SET `lots`.`winner_id` = ? WHERE `lots`.`id` = ?';
 
-    $stmt = dbGetPrepareStmt($connection, $query, [$user_id, $lot_id]);
+    $stmt = dbGetPrepareStmt($connection, $query, [$userId, $lotId]);
     return mysqli_stmt_execute($stmt);
 }
