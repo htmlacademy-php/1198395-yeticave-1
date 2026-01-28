@@ -1,10 +1,13 @@
 <?php
 
 /**
- * Создаёт соединение с БД. Завершает работу сценария, если возникает ошибка соединения к БД.
+ * Создаёт соединение с БД.
+ *
+ * Завершает работу сценария, если возникает ошибка соединения с БД.
+ *
  * @param array $config Массив с настройками БД.
  *
- * @return mysqli Готовое соединение.
+ * @return mysqli Ресурс соединения.
  */
 function createConnection(array $config): mysqli
 {
@@ -20,7 +23,7 @@ function createConnection(array $config): mysqli
     }
 
     if (!$connection) {
-        error_log(mysqli_connect_error());
+        error_log(mysqli_connect_error() ?? 'Ошибка соединения с базой данных.');
         exit('Ошибка соединения с базой данных.');
     }
 
@@ -31,7 +34,8 @@ function createConnection(array $config): mysqli
 
 /**
  * Устанавливает юникод 'utf8mb4'. Завершает сценарий при ошибке.
- * @param mysqli $connection Готовое соединение.
+ *
+ * @param mysqli $connection Ресурс соединения.
  *
  * @return void
  */
@@ -44,10 +48,16 @@ function setUnicode(mysqli $connection): void
 }
 
 /**
- * Проверяет наличие открытой сессии для пользователя. При наличии таковой, удостоверяется, что пользователь всё ещё есть в БД.
+ * Проверяет наличие открытой сессии для пользователя.
+ *
+ * При наличии таковой, удостоверяется, что пользователь всё ещё есть в БД.
  * Если пользователь не был найден, обнуляет сессию.
+ *
  * @param mysqli $connection Ресурс соединения.
- * @return array|false Либо массив с данными о пользователе, либо false.
+ *
+ * @return array|false Ассоциативный массив с данными о пользователе, полученный из БД в виде
+ * @see getUser()
+ * либо `false` при отсутствии авторизованного пользователя.
  */
 function getAuthUser(mysqli $connection): array|false
 {

@@ -17,11 +17,15 @@ $formInputs = [];
 $errors = [];
 
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS) ?? [];
+    $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if (is_null($formInputs) || $formInputs === false) {
+        exit('Ошибка получения данных формы');
+    }
 
     $errors = validateFormAddLot($formInputs, $cats);
 
-    if (empty($errors) && $errors !== false) {
+    if (empty($errors)) {
         $uploadStatus = uploadImg('lot-img');
 
         if (isset($uploadStatus['success'], $uploadStatus['imgPath']) && $uploadStatus['success']) {

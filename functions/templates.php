@@ -1,7 +1,5 @@
 <?php
 
-use JetBrains\PhpStorm\NoReturn;
-
 /**
  * Возвращает корректную форму множественного числа
  * Ограничения: только для целых чисел
@@ -38,11 +36,14 @@ function getNounPluralForm(int $number, string $one, string $two, string $many):
 }
 
 /**
- * Принимает дату и вычисляет, сколько времени прошло после нее. В зависимости от количества времени, возвращает результат
+ * Принимает дату и вычисляет, сколько времени прошло после нее.
+ *
+ * В зависимости от количества времени, возвращает результат
  * в разном формате:
  *  - больше суток - дату и время создания
  *  - меньше часа - количество прошедших минут
  *  - больше часа - количество часов
+ *
  * @param string $date Дата в строковом формате (ГГГГ-ММ-ДД)
  * @param DateTime $currentDate Текущая дата
  *
@@ -75,8 +76,10 @@ function getTimePassedAfterDate(string $date, DateTime $currentDate): string
 
 /**
  * Подключает шаблон, передает туда данные и возвращает итоговый HTML контент
+ *
  * @param string $name Путь к файлу шаблона относительно папки templates
  * @param array $data Ассоциативный массив с данными для шаблона
+ *
  * @return string|false Итоговый HTML
  */
 function includeTemplate(string $name, array $data = []): string|false
@@ -97,7 +100,9 @@ function includeTemplate(string $name, array $data = []): string|false
 
 /**
  * Форматирует цену товара, добавляя знак рубля в конце и отступы, если число многозначное
+ *
  * @param int $price Цена товара в целочисленном формате
+ *
  * @return string Отформатированная цена
  */
 function formatPrice(int $price): string
@@ -112,8 +117,10 @@ function formatPrice(int $price): string
 
 /**
  * Принимает будущую дату и вычисляет, сколько осталось целых часов и минут до этой даты от текущей
+ *
  * @param string $date Будущая дата в строковом формате (ГГГГ-ММ-ДД)
  * @param DateTime $currentDate Текущая дата
+ *
  * @return string[] Массив, в котором первый элемент - часы, второй - минуты
  */
 function getDtRange(string $date, DateTime $currentDate): array
@@ -141,12 +148,15 @@ function getDtRange(string $date, DateTime $currentDate): array
 
 /**
  * Показывает шаблон ошибки с заданным кодом и сообщением.
+ *
  * @param int $code Код ошибки.
  * @param string $message Сообщение ошибки.
  * @param array $cats Категории (необходимы для отображения навигации).
  * @param array|false $user Информация о пользователе (необходима для шаблона).
+ *
+ * @return void
  */
-#[NoReturn]
+
 function showError(int $code, string $message, array $cats, array|false $user): void
 {
     $errorTitle = 'Ошибка ' . $code;
@@ -183,9 +193,11 @@ function showError(int $code, string $message, array $cats, array|false $user): 
 
 /**
  * Вычисляет, показывать ставки на странице или нет.
+ *
  * @param array|false $user Залогинен ли пользователь. Если нет, ставки не показываются.
  * @param array $lot Информация о лоте. Если истек срок ставок или лот уже был выигран, ставки не показываются.
  * @param array $bids Информация о ставках. Если последняя ставка была сделана залогиненым пользователем, ставки не показываются.
+ *
  * @return bool `true` - показывать ставки, `false` - нет.
  */
 function showBids(array|false $user, array $lot, array $bids): bool

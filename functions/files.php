@@ -3,9 +3,13 @@
 /**
  * Проверяет файл, который пользователь добавил в форму. При успешной валидации загружает файл на сервер и возвращает путь к файлу на сервере,
  * при неуспешной - возвращает сообщение ошибки.
+ *
  * @param string $filename Имя файла в системе пользователя.
  *
- * @return array Массив, состоящий из статуса загрузки файла, сообщения об ошибке и пути к файлу на сервере.
+ * @return array Ассоциативный массив с ключами:
+ * `success` - `bool` успешно ли загружен файл;
+ * `error` - описание ошибки загрузки;
+ * `imgPath` - путь к файлу на сервере.
  */
 function uploadImg(string $filename): array
 {
@@ -16,12 +20,18 @@ function uploadImg(string $filename): array
             'imgPath' => '',
         ];
 
-    if (!isset($_FILES[$filename]) || empty($_FILES[$filename]['tmp_name'])) {
+    if (!isset($_FILES[$filename], $_FILES[$filename]['tmp_name'], $_FILES[$filename]['size']) || empty($_FILES[$filename]['tmp_name'])) {
         $result['error'] = 'Загрузите картинку в формате "jpeg" или "png".';
         return $result;
     }
 
     $fileInfo = finfo_open(FILEINFO_MIME_TYPE);
+
+    if (!$fileInfo) {
+        $result['error'] = 'Не удалось получить информацию о файле.';
+        return $result;
+    }
+
     $fileTempName = $_FILES[$filename]['tmp_name'];
     $fileSize = $_FILES[$filename]['size'];
 
@@ -42,7 +52,7 @@ function uploadImg(string $filename): array
     }
 
     $fileType = $acceptedTypes[$fileType];
-    $rootPath = $_SERVER['DOCUMENT_ROOT'];
+    $rootPath = $_SERVER['DOCUMENT_ROOT'] ?? '';
     $filePath = '/uploads/' . uniqid() . $fileType;
 
     move_uploaded_file($fileTempName, "$rootPath/$filePath")

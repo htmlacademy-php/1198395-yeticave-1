@@ -1,14 +1,21 @@
 <?php
 
 /**
- * Получает список из 9 недавно добавленных лотов, у которых не истек срок торгов (lot.date_exp).
+ * Получает список из 9 недавно добавленных лотов, у которых не истек срок торгов.
+ *
  * @param mysqli $connection Готовое соединение.
  *
- * @return array Массив с лотами.
+ * @return array Многомерный ассоциативный массив с ключами:
+ * `id` - id лота;
+ * `name` - имя лота;
+ * `img_url` - путь к изображению лота;
+ * `price` - начальная цена лота;
+ * `date_exp` - дата истечения срока торгов на лот;
+ * `category` - категория, к которой относится лот.
  */
 function getRecentLots(mysqli $connection): array
 {
-    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `cats`.`name` AS `category` '
+    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`img_url`, `lots`.`price`, `lots`.`date_exp`, `cats`.`name` AS `category` '
         . 'FROM `lots` JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'WHERE `lots`.`date_exp` > CURDATE() '
         . 'AND `lots`.`winner_id` IS NULL '
@@ -19,9 +26,13 @@ function getRecentLots(mysqli $connection): array
 
 /**
  * Получает список всех категорий.
+ *
  * @param mysqli $connection Готовое соединение.
  *
- * @return array Массив с категориями.
+ * @return array Многомерный ассоциативный массив с ключами:
+ * `id` - id категории;
+ * `name` - название категории;
+ * `class` - css класс категории.
  */
 function getAllCats(mysqli $connection): array
 {
@@ -32,10 +43,22 @@ function getAllCats(mysqli $connection): array
 
 /**
  * Получает данные об одном лоте по его id и возвращает их в виде массива. Завершает сценарий при ошибке.
+ *
  * @param mysqli $connection Готовое соединение.
  * @param int $lotId Id лота.
  *
- * @return array|false Данные из БД в виде массива.
+ * @return array|false Ассоциативный массив с ключами:
+ * `id` - id лота;
+ * `name` - имя лота;
+ * `price` - начальная цена лота;
+ * `img_url` - путь к изображению лота;
+ * `date_exp` - дата истечения срока торгов на лот;
+ * `description` - описание лота;
+ * `winner_id` - id пользователя-победителя торгов на лот;
+ * `bid_step` - шаг ставки;
+ * `user_id` - id пользователя-создателя лота;
+ * `category` - категория, к которой относится лот;
+ * `max_price` - максимальная ставка на лот на данный момент.
  */
 function getLotById(mysqli $connection, int $lotId): array|false
 {
@@ -57,10 +80,16 @@ function getLotById(mysqli $connection, int $lotId): array|false
 
 /**
  * Получает данные о ставках для лота по его id, отсортированные по дате (от ранних к поздним).
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param int $lotId Id лота.
  *
- * @return array Массив со ставками.
+ * @return array Многомерный ассоциативный массив с ключами:
+ * `user_id` - id пользователя, сделавшего ставку;
+ * `amount` - величина ставки;
+ * `created_at` - время ставки;
+ * `lot_id` - id лота, на который делалась ставка;
+ * `user_name` - имя пользователя, сделавшего ставку.
  */
 function getBidsByLot(mysqli $connection, int $lotId): array
 {
@@ -72,7 +101,8 @@ function getBidsByLot(mysqli $connection, int $lotId): array
 }
 
 /**
- * Получает данные из БД и возвращает их в виде многомерного массива. Завершает сценарий при ошибке.
+ * Получает данные из БД и возвращает их в виде многомерного ассоциативного массива. Завершает сценарий при ошибке.
+ *
  * @param mysqli $connection Готовое соединение.
  * @param string $query Запрос к БД.
  *
@@ -90,11 +120,12 @@ function getData(mysqli $connection, string $query): array
 }
 
 /**
- * Добавляет лот на сервер через подготовленное выражение. Возвращает либо id лота, либо false при ошибке.
+ * Добавляет лот на сервер через подготовленное выражение.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param array $formInputs Данные из формы.
  *
- * @return int|false Id лота, либо false при ошибке.
+ * @return int|false `id` лота, либо `false` при ошибке.
  */
 function addLot(mysqli $connection, array $formInputs): int|false
 {
@@ -112,10 +143,17 @@ function addLot(mysqli $connection, array $formInputs): int|false
 
 /**
  * Получает информацию о пользователе по переданному email.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param string $email Строка с email.
  *
- * @return array|false Данные о пользователе или `false`, если пользователь не найден, или произошла ошибка при получении данных.
+ * @return array|false Ассоциативный массив с ключами:
+ * `id` - id пользователя;
+ * `email` - почта пользователя;
+ * `name` - имя пользователя;
+ * `password` - хэш-пароль;
+ * `contacts` - контакты пользователя для связи;
+ * или `false`, если пользователь не найден, или произошла ошибка при получении данных.
  */
 function getUser(mysqli $connection, string $email): array|false
 {
@@ -136,10 +174,12 @@ function getUser(mysqli $connection, string $email): array|false
 }
 
 /**
- * Проверяет, есть ли в БД переданный email.
+ * Проверяет, есть ли в БД пользователь с переданным email.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param string $email Строка с email.
- * @return bool True, если такого email еще нет, false - если уже есть.
+ *
+ * @return bool `true`, если такого email еще нет, `false` - если уже есть.
  */
 function isEmailUnique(mysqli $connection, string $email): bool
 {
@@ -164,10 +204,11 @@ function isEmailUnique(mysqli $connection, string $email): bool
 
 /**
  * Добавляет нового пользователя в БД.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param array $formInputs Данные формы.
  *
- * @return bool Создан пользователь или нет.
+ * @return bool `true` - пользователь добавлен в БД, `false` - произошла ошибка.
  */
 function addUser(mysqli $connection, array $formInputs): bool
 {
@@ -234,9 +275,11 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
 
 /**
  * Получает общее количество найденных активных лотов, подходящих под запрос.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param string $searchQuery Запрос.
  * @param array $values Значение запроса.
+ *
  * @return int Количество лотов.
  */
 function getMatchedLotsCount(mysqli $connection, string $searchQuery, array $values): int
@@ -260,10 +303,12 @@ function getMatchedLotsCount(mysqli $connection, string $searchQuery, array $val
 
 /**
  * Выполняет поиск лотов по запросу.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param array $searchInfo Поисковая информация, полученная при валидации запроса.
  * @param int|false $page Запрашиваемая страница пагинации.
  * @param int $lotsPerPage Количество лотов на одной странице.
+ *
  * @return array Общее количество страниц и найденные лоты для переданной страницы.
  */
 function search(mysqli $connection, array $searchInfo, int $lotsPerPage, int|false $page): array
@@ -319,8 +364,7 @@ function search(mysqli $connection, array $searchInfo, int $lotsPerPage, int|fal
 
     $stmt = dbGetPrepareStmt($connection, $query, $values);
 
-    if (mysqli_stmt_execute($stmt)) {
-        $lots = mysqli_stmt_get_result($stmt);
+    if (mysqli_stmt_execute($stmt) && $lots = mysqli_stmt_get_result($stmt)) {
         $result['lots'] = mysqli_fetch_all($lots, MYSQLI_ASSOC);
     }
 
@@ -329,8 +373,10 @@ function search(mysqli $connection, array $searchInfo, int $lotsPerPage, int|fal
 
 /**
  * Добавляет ставку к лоту.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param array $values Массив из величины ставки, id лота и пользователя.
+ *
  * @return bool `true` - ставка добавлена, `false` - при ошибке.
  */
 function addBid(mysqli $connection, array $values): bool
@@ -342,8 +388,10 @@ function addBid(mysqli $connection, array $values): bool
 
 /**
  * Получает ставки пользователя по его id.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param int $userId Id пользователя.
+ *
  * @return array Массив с информацией о ставках.
  */
 function getUserBids(mysqli $connection, int $userId): array
@@ -357,10 +405,12 @@ function getUserBids(mysqli $connection, int $userId): array
 }
 
 /**
- * Получает массив из истекших по времени лотов, на которые делались ставки и у которых не определен победитель.
- * Также получает Id пользователя, сделавшего наибольшую ставку на лот.
+ * Получает массив из истекших по времени лотов со ставками и без победителя.
+ * Также получает `id` пользователя, сделавшего наибольшую ставку на лот.
+ *
  * @param mysqli $connection Ресурс соединения.
- * @return array Массив из лотов и id пользователя с наибольшей ставкой.
+ *
+ * @return array Многомерный ассоциативный массив из лотов и id пользователя с наибольшей ставкой.
  */
 function getExpiredLots(mysqli $connection): array
 {
@@ -373,9 +423,11 @@ function getExpiredLots(mysqli $connection): array
 
 /**
  * Назначает победителя для лота.
+ *
  * @param mysqli $connection Ресурс соединения.
  * @param int $lotId Id лота.
  * @param int $userId Id победителя.
+ *
  * @return bool Успешно ли обновились данные о лоте.
  */
 function setLotWinner(mysqli $connection, int $lotId, int $userId): bool

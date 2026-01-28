@@ -44,7 +44,8 @@
                         <a class="user-menu__bets" href="/my-bets.php">Мои ставки</a>
                         <a class="user-menu__logout" href="/logout.php">Выход</a>
                     </div>
-                <?php else : ?>
+                <?php
+                else : ?>
                     <ul class="user-menu__list">
                         <li class="user-menu__item">
                             <a href="/sign-up.php">Регистрация</a>
@@ -64,7 +65,7 @@
     <?= $navContent; ?>
     <div class="main-footer__bottom container">
         <div class="main-footer__copyright">
-            <p>© 2019, YetiCave</p>
+            <p>© <?= new DateTime('now')->format('Y'); ?>, YetiCave</p>
             <p>Интернет-аукцион сноубордического и горнолыжного снаряжения</p>
         </div>
         <div class="main-footer__social social">

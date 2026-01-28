@@ -10,7 +10,7 @@ $cats = getAllCats($connection);
 $lotId = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
 $user = getAuthUser($connection);
 
-if (!$lotId || (!$lot = getLotById($connection, $lotId)) || !isset($lot['price'], $lot['bid_step'])) {
+if (!$lotId || (!$lot = getLotById($connection, $lotId)) || !isset($lot['price'], $lot['bid_step'], $lot['name'])) {
     showError(404, 'Данной страницы не существует на сайте.', $cats, $user);
 }
 
@@ -21,8 +21,13 @@ $minBid = $price + (int)$lot['bid_step'];
 $formInputs = [];
 $errors = [];
 
-if ($user !== false && $_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($user !== false && isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $formInputs = filter_input_array(INPUT_POST, FILTER_SANITIZE_SPECIAL_CHARS);
+
+    if (is_null($formInputs) || $formInputs === false) {
+        exit('Ошибка получения данных формы');
+    }
+
     $errors = validateFormBids($formInputs, $minBid);
 
     if (empty($errors) && isset($formInputs['cost'], $user['id'], $lot['id'])) {

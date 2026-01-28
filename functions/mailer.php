@@ -7,7 +7,9 @@ use Symfony\Component\Mime\Email;
 
 /**
  * Создаёт экземпляр класса Mailer с настройками по переданной конфигурации.
+ *
  * @param array $config Массив с конфигурацией.
+ *
  * @return Mailer Экземпляр класса Mailer.
  */
 function setMailer(array $config): Mailer
@@ -27,10 +29,13 @@ function setMailer(array $config): Mailer
 
 /**
  * Отправляет письмо победителю о выигрыше в аукционе.
+ *
  * @param Mailer $mailer Настроенный экземпляр класса Mailer.
  * @param array $lot Информация о лоте.
  * @param array $config Конфигурация Mailer.
+ *
  * @return bool `true|false` Успех/неуспех при отправке письма.
+ *
  * @throws TransportExceptionInterface
  */
 function sendMessage(Mailer $mailer, array $lot, array $config): bool
@@ -53,8 +58,12 @@ function sendMessage(Mailer $mailer, array $lot, array $config): bool
     $message->to($lot['email']);
     $message->from($config['email']);
     $message->subject('Ваша ставка победила');
-    $message->html($mailTemplate);
-    $message->text(strip_tags($mailTemplate));
+
+    if ($mailTemplate !== false) {
+        $message->html($mailTemplate);
+        $message->text(strip_tags($mailTemplate));
+    }
+
     $mailer->send($message);
     return true;
 }

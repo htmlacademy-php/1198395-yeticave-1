@@ -2,10 +2,17 @@
 
 /**
  * Проверяет данные поискового запроса.
+ *
  * @param string|false $text Текст запроса.
  * @param int|false $catId Id категории.
  * @param array $cats Список категорий.
- * @return array Массив с данными валидации.
+ *
+ * @return array Ассоциативный массив с ключами:
+ * `bool isTextValid` - валиден ли текст поиска (непустой);
+ * `string text` - текст запроса;
+ * `bool isCatValid` - валидна ли категория запроса (если идет поиск по категориям);
+ * `string catName` - название категории;
+ * `int catId` - `id` категории.
  */
 function validateSearch(string|false $text, int|false $catId, array $cats): array
 {
@@ -18,7 +25,7 @@ function validateSearch(string|false $text, int|false $catId, array $cats): arra
             'catId' => 0,
         ];
 
-    $text = $text ? trim($text) : '';
+    $text = $text !== false ? trim($text) : '';
 
     if (!empty($text)) {
         $result['isTextValid'] = true;
@@ -40,13 +47,14 @@ function validateSearch(string|false $text, int|false $catId, array $cats): arra
 
 /**
  * Принимает данные формы входа на сайт, проверяет их и собирает ошибки в массив.
+ *
  * @param array $formInputs Массив данных из формы входа.
  * @param mysqli $connection Ресурс соединения. Нужен для сверки логина/пароля с БД.
  *
- * @return array Ассоциативный массив с тремя ключами:
- * bool success - успех/неуспех валидации;
- * array user - информация пользователя при совпадении пары email/пароль;
- * array errors - ошибки валидации.
+ * @return array Ассоциативный массив с ключами:
+ * `bool success` - успех/неуспех валидации;
+ * `array user` - информация пользователя при совпадении пары email/пароль;
+ * `array errors` - ошибки валидации.
  */
 function validateFormLogin(array $formInputs, mysqli $connection): array
 {
@@ -58,10 +66,10 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
 
     $rules =
         [
-            'email' => function ($value) {
+            'email' => function (string $value): null|string {
                 return validateEmail($value, 128);
             },
-            'password' => function ($value) {
+            'password' => function (string $value): null|string {
                 return validateTextLength($value, 8, 128);
             },
         ];
@@ -74,7 +82,10 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
 
     $user = getUser($connection, $formInputs['email']);
 
-    $result['success'] = $user && password_verify($formInputs['password'], $user['password']);
+    $result['success'] = $user !== false && isset($user['id'], $user['name'], $user['email']) && password_verify(
+            $formInputs['password'],
+            $user['password']
+        );
 
     if (!$result['success']) {
         $result['errors'] =
@@ -97,6 +108,7 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
 
 /**
  * Принимает данные формы регистрации на сайте, проверяет их и собирает ошибки в массив.
+ *
  * @param array $fromInputs Массив данных из формы регистрации.
  * @param mysqli $connection Ресурс соединения.
  *
@@ -106,16 +118,16 @@ function validateFormSignUp(array $fromInputs, mysqli $connection): array
 {
     $rules =
         [
-            'email' => function ($value) {
+            'email' => function (string $value): null|string {
                 return validateEmail($value, 128);
             },
-            'password' => function ($value) {
+            'password' => function (string $value): null|string {
                 return validateTextLength($value, 8, 128);
             },
-            'name' => function ($value) {
+            'name' => function (string $value): null|string {
                 return validateTextLength($value, 1, 128);
             },
-            'message' => function ($value) {
+            'message' => function (string $value): null|string {
                 return validateEmptyText($value);
             },
         ];
@@ -131,35 +143,32 @@ function validateFormSignUp(array $fromInputs, mysqli $connection): array
 
 /**
  * Принимает данные формы добавления лота, проверяет их и собирает ошибки в массив.
+ *
  * @param array $formInputs Данные из формы.
  * @param array $cats Массив с существующими категориями на сервере.
  *
- * @return array|false `array` Массив выявленных ошибок в форме или `false` при пустых данных формы.
+ * @return array Массив выявленных ошибок в форме или `false` при пустых данных формы.
  */
-function validateFormAddLot(array|false|null $formInputs, array $cats): array|false
+function validateFormAddLot(array $formInputs, array $cats): array
 {
-    if (empty($formInputs)) {
-        return false;
-    }
-
     $rules =
         [
-            'lot-name' => function ($value) {
+            'lot-name' => function (string $value): null|string {
                 return validateTextLength($value, 1, 128);
             },
-            'description' => function ($value) {
+            'description' => function (string $value): null|string {
                 return validateEmptyText($value);
             },
-            'lot-price' => function ($value) {
+            'lot-price' => function (string $value): null|string {
                 return validateNumberFormat($value);
             },
-            'lot-step' => function ($value) {
+            'lot-step' => function (string $value): null|string {
                 return validateNumberFormat($value);
             },
-            'lot-date' => function ($value) {
+            'lot-date' => function (string $value): null|string {
                 return validateDateFormat($value);
             },
-            'category' => function ($value) use ($cats) {
+            'category' => function (string $value) use ($cats): null|string {
                 return validateCategory($value, $cats);
             },
         ];
@@ -169,6 +178,7 @@ function validateFormAddLot(array|false|null $formInputs, array $cats): array|fa
 
 /**
  * Принимает данные формы добавления ставки, проверяет их и собирает ошибки в массив.
+ *
  * @param array $formInputs Массив данных из формы.
  * @param int $minBid Минимальная ставка.
  *
@@ -178,7 +188,7 @@ function validateFormBids(array $formInputs, int $minBid): array
 {
     $rules =
         [
-            'cost' => function ($value) use ($minBid) {
+            'cost' => function (string $value) use ($minBid): null|string {
                 return (int)$value < $minBid ? 'Минимальная ставка ' . $minBid . ' р.' : null;
             },
         ];
@@ -188,8 +198,10 @@ function validateFormBids(array $formInputs, int $minBid): array
 
 /**
  * Принимает данные формы и словарь с правилами-валидаторами для нее. Применяет для каждого поля свой валидатор и собирает ошибки в массив.
+ *
  * @param array $formInputs Массив данных из формы.
  * @param array $rules Словарь с правилами-валидаторами (ключ = имя поля формы, значение - функция-валидатор).
+ *
  * @return array Массив выявленных ошибок в форме.
  */
 function validateForm(array $formInputs, array $rules): array
@@ -208,6 +220,7 @@ function validateForm(array $formInputs, array $rules): array
 
 /**
  * Проверяет, чтобы длина переданного текста соответствовала заданным параметрам.
+ *
  * @param string $text Текст для валидации.
  * @param int $min Минимальное значение.
  * @param int $max Максимальное значение.
@@ -226,6 +239,7 @@ function validateTextLength(string $text, int $min, int $max): string|null
 
 /**
  * Проверяет текстовое поле, чтобы оно не было пустым.
+ *
  * @param string $text Текст для проверки.
  *
  * @return string|null Текст ошибки либо null, если ошибок нет.
@@ -241,6 +255,7 @@ function validateEmptyText(string $text): string|null
 
 /**
  * Проверяет число на соответствие формату (целочисленное и больше нуля).
+ *
  * @param string $number Число для проверки.
  *
  * @return string|null Текст ошибки либо null, если ошибок нет.
@@ -257,6 +272,7 @@ function validateNumberFormat(string $number): string|null
 /**
  * Проверяет дату, переданную в строковом виде. Дата должна соответствовать формату ГГГГ-ММ-ДД
  * и быть больше текущей даты хотя бы на один день.
+ *
  * @param string $date Дата в виде строки.
  *
  * @return string|null Текст ошибки либо null, если ошибок нет.
@@ -279,6 +295,7 @@ function validateDateFormat(string $date): string|null
 
 /**
  * Проверяет наличие переданной категории в массиве существующих категорий.
+ *
  * @param string $category Категория для проверки.
  * @param array $cats Массив с существующими категориями.
  *
@@ -297,6 +314,7 @@ function validateCategory(string $category, array $cats): string|null
 /**
  * Проверяет соответствие переданной строки email-формату. Удостоверяется, что переданный email является уникальным.
  * Возвращает либо строку с описанием ошибки, либо null, если email валиден.
+ *
  * @param string $email Строка с предполагаемым email.
  * @param int $max Максимальная длина email.
  *

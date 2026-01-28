@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <psalm
-  errorLevel="1"
+  errorLevel="2"
   resolveFromConfigFile="true"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns="https://getpsalm.org/schema/config"
@@ -8,9 +8,6 @@
   findUnusedBaselineEntry="true"
   findUnusedCode="true"
 >
-  <enableExtensions>
-    <extension name="mysqli"/>
-  </enableExtensions>
   <projectFiles>
     <file name="add.php"/>
     <file name="config.php"/>
@@ -25,6 +22,7 @@
     <file name="search.php"/>
     <file name="sign-up.php"/>
     <file name="test.php"/>
+    <file name="functions/auth.php"/>
     <file name="functions/db_fetching.php"/>
     <file name="functions/files.php"/>
     <file name="functions/form_validators.php"/>
@@ -41,6 +39,17 @@
     <file name="templates/nav.php"/>
     <file name="templates/search.php"/>
     <file name="templates/sign-up.php"/>
+    <file name="vendor/autoload.php"/>
+    <file name="vendor/composer/autoload_classmap.php"/>
+    <file name="vendor/composer/autoload_files.php"/>
+    <file name="vendor/composer/autoload_namespaces.php"/>
+    <file name="vendor/composer/autoload_psr4.php"/>
+    <file name="vendor/composer/autoload_real.php"/>
+    <file name="vendor/composer/autoload_static.php"/>
+    <file name="vendor/composer/ClassLoader.php"/>
+    <file name="vendor/composer/installed.php"/>
+    <file name="vendor/composer/InstalledVersions.php"/>
+    <file name="vendor/composer/platform_check.php"/>
     <ignoreFiles>
       <directory name="vendor"/>
     </ignoreFiles>
