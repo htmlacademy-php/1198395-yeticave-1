@@ -10,7 +10,12 @@ $cats = getAllCats($connection);
 $user = getAuthUser($connection);
 
 if ($user !== false) {
-    showError(403, 'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта', $cats, $user);
+    showError(
+        403,
+        'Чтобы зарегистрировать нового пользователя, выйдите из текущего аккаунта',
+        $cats,
+        $user
+    );
 }
 
 $formInputs = [];

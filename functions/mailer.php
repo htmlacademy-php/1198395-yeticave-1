@@ -40,30 +40,32 @@ function setMailer(array $config): Mailer
  */
 function sendMessage(Mailer $mailer, array $lot, array $config): bool
 {
-    if (!isset($lot['userName'], $lot['name'], $lot['id'], $config['url'], $lot['email'], $config['email'])) {
-        error_log('Отсутствуют необходимые ключи в передаваемом массиве lot или config.');
-        return false;
+    $result = false;
+
+    if (isset($lot['userName'], $lot['name'], $lot['id'], $config['url'], $lot['email'], $config['email'])) {
+        $message = new Email();
+        $mailTemplate = includeTemplate(
+            'email.php',
+            [
+                'userName' => $lot['userName'],
+                'lotName' => $lot['name'],
+                'lotId' => $lot['id'],
+                'url' => $config['url'],
+            ],
+        );
+        $message->to($lot['email']);
+        $message->from($config['email']);
+        $message->subject('Ваша ставка победила');
+
+        if ($mailTemplate !== false) {
+            $message->html($mailTemplate);
+            $message->text(strip_tags($mailTemplate));
+        }
+
+        $mailer->send($message);
+
+        $result = true;
     }
 
-    $message = new Email();
-    $mailTemplate = includeTemplate(
-        'email.php',
-        [
-            'userName' => $lot['userName'],
-            'lotName' => $lot['name'],
-            'lotId' => $lot['id'],
-            'url' => $config['url'],
-        ],
-    );
-    $message->to($lot['email']);
-    $message->from($config['email']);
-    $message->subject('Ваша ставка победила');
-
-    if ($mailTemplate !== false) {
-        $message->html($mailTemplate);
-        $message->text(strip_tags($mailTemplate));
-    }
-
-    $mailer->send($message);
-    return true;
+    return $result;
 }

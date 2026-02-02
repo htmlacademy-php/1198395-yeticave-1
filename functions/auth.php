@@ -61,15 +61,15 @@ function setUnicode(mysqli $connection): void
  */
 function getAuthUser(mysqli $connection): array|false
 {
-    if (!isset($_SESSION['user'], $_SESSION['user']['email'])) {
-        return false;
+    $result = false;
+
+    if (isset($_SESSION['user'], $_SESSION['user']['email'])) {
+        $result = getUser($connection, $_SESSION['user']['email']);
+
+        if ($result === false) {
+            $_SESSION = [];
+        }
     }
-
-    $result = getUser($connection, $_SESSION['user']['email']);
-
-    if ($result === false) {
-        $_SESSION = [];
-    }
-
+    
     return $result;
 }
