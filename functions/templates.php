@@ -70,7 +70,8 @@ function getTimePassedAfterDate(string $date, DateTime $currentDate): string
                 'минуты',
                 'минут',
             ) . ' назад',
-        default => $dateDiff->h . ' ' . getNounPluralForm($dateDiff->h, 'час', 'часа', 'часов') . ' назад',
+        default => $dateDiff->h . ' '
+            . getNounPluralForm($dateDiff->h, 'час', 'часа', 'часов') . ' назад',
     };
 }
 
@@ -125,25 +126,27 @@ function formatPrice(int $price): string
  */
 function getDtRange(string $date, DateTime $currentDate): array
 {
+    $result = ['00', '00'];
+
     try {
         $endDate = date_create($date);
     } catch (Throwable $e) {
         error_log($e->getMessage());
-        return ['00', '00'];
+        return $result;
     }
 
-    if ($currentDate > $endDate) {
-        return ['00', '00'];
+    if ($currentDate < $endDate) {
+        $dateDiff = date_diff($currentDate, $endDate);
+
+        $resultHours = $dateDiff->days * 24 + $dateDiff->h;
+        $resultHours = str_pad((string)$resultHours, 2, '0', STR_PAD_LEFT);
+
+        $minutesLeft = str_pad((string)$dateDiff->i, 2, '0', STR_PAD_LEFT);
+
+        $result = [$resultHours, $minutesLeft];
     }
 
-    $dateDiff = date_diff($currentDate, $endDate);
-
-    $resultHours = $dateDiff->days * 24 + $dateDiff->h;
-    $resultHours = str_pad((string)$resultHours, 2, '0', STR_PAD_LEFT);
-
-    $minutesLeft = str_pad((string)$dateDiff->i, 2, '0', STR_PAD_LEFT);
-
-    return [$resultHours, $minutesLeft];
+    return $result;
 }
 
 /**
@@ -196,23 +199,23 @@ function showError(int $code, string $message, array $cats, array|false $user): 
  *
  * @param array|false $user Залогинен ли пользователь. Если нет, ставки не показываются.
  * @param array $lot Информация о лоте. Если истек срок ставок или лот уже был выигран, ставки не показываются.
- * @param array $bids Информация о ставках. Если последняя ставка была сделана залогиненым пользователем, ставки не показываются.
+ * @param array $bids Информация о ставках.
+ * Если последняя ставка была сделана залогиненым пользователем, ставки не показываются.
  *
  * @return bool `true` - показывать ставки, `false` - нет.
  */
 function showBids(array|false $user, array $lot, array $bids): bool
 {
-    if (!isset($lot['date_exp'], $lot['user_id'])) {
-        error_log('Нет необходимых ключей в переданном массиве lot');
-        return false;
-    }
+    $result = false;
 
-    [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime());
-    $isExp = $hours === '00' && $minutes === '00';
-    $result = $user !== false && !$isExp && (int)$user['id'] !== (int)$lot['user_id'] && !isset($lot['winner_id']);
+    if (isset($lot['date_exp'], $lot['user_id'])) {
+        [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime());
+        $isExp = $hours === '00' && $minutes === '00';
+        $result = $user !== false && !$isExp && (int)$user['id'] !== (int)$lot['user_id'] && !isset($lot['winner_id']);
 
-    if (isset($bids[0], $bids[0]['user_id'])) {
-        $result = $result && (int)$user['id'] !== (int)$bids[0]['user_id'];
+        if (isset($bids[0], $bids[0]['user_id'])) {
+            $result = $result && (int)$user['id'] !== (int)$bids[0]['user_id'];
+        }
     }
 
     return $result;

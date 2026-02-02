@@ -76,32 +76,32 @@ function validateFormLogin(array $formInputs, mysqli $connection): array
 
     $result['errors'] = validateForm($formInputs, $rules);
 
-    if (!empty($result['errors']) || !isset($formInputs['email'], $formInputs['password'])) {
-        return $result;
+    if (empty($result['errors']) && isset($formInputs['email'], $formInputs['password'])) {
+        $user = getUser($connection, $formInputs['email']);
+
+        $result['success'] = $user !== false && isset($user['id'], $user['name'], $user['email']) && password_verify(
+                $formInputs['password'],
+                $user['password']
+            );
+
+        switch ($result['success']) {
+            case true :
+                $result['user'] =
+                    [
+                        'id' => $user['id'],
+                        'email' => $user['email'],
+                        'name' => $user['name'],
+                    ];
+                break;
+            case false :
+                $result['errors'] =
+                    [
+                        'email' => 'Вы ввели неверный email/пароль',
+                        'password' => 'Вы ввели неверный email/пароль',
+                    ];
+                break;
+        }
     }
-
-    $user = getUser($connection, $formInputs['email']);
-
-    $result['success'] = $user !== false && isset($user['id'], $user['name'], $user['email']) && password_verify(
-            $formInputs['password'],
-            $user['password']
-        );
-
-    if (!$result['success']) {
-        $result['errors'] =
-            [
-                'email' => 'Вы ввели неверный email/пароль',
-                'password' => 'Вы ввели неверный email/пароль',
-            ];
-        return $result;
-    }
-
-    $result['user'] =
-        [
-            'id' => $user['id'],
-            'email' => $user['email'],
-            'name' => $user['name'],
-        ];
 
     return $result;
 }
@@ -197,7 +197,8 @@ function validateFormBids(array $formInputs, int $minBid): array
 }
 
 /**
- * Принимает данные формы и словарь с правилами-валидаторами для нее. Применяет для каждого поля свой валидатор и собирает ошибки в массив.
+ * Принимает данные формы и словарь с правилами-валидаторами для нее.
+ * Применяет для каждого поля свой валидатор и собирает ошибки в массив.
  *
  * @param array $formInputs Массив данных из формы.
  * @param array $rules Словарь с правилами-валидаторами (ключ = имя поля формы, значение - функция-валидатор).
@@ -229,12 +230,14 @@ function validateForm(array $formInputs, array $rules): array
  */
 function validateTextLength(string $text, int $min, int $max): string|null
 {
+    $result = null;
+
     $textLength = mb_strlen($text, 'UTF-8');
     if ($textLength < $min || $textLength > $max) {
-        return "Значение поля должно быть от $min до $max символов.";
+        $result = "Значение поля должно быть от $min до $max символов.";
     }
 
-    return null;
+    return $result;
 }
 
 /**
@@ -246,11 +249,13 @@ function validateTextLength(string $text, int $min, int $max): string|null
  */
 function validateEmptyText(string $text): string|null
 {
+    $result = null;
+
     if (empty($text)) {
-        return 'Значение поля не должно быть пустым.';
+        $result = 'Значение поля не должно быть пустым.';
     }
 
-    return null;
+    return $result;
 }
 
 /**
@@ -262,11 +267,13 @@ function validateEmptyText(string $text): string|null
  */
 function validateNumberFormat(string $number): string|null
 {
+    $result = null;
+
     if (!filter_var($number, FILTER_VALIDATE_INT) || (int)$number <= 0) {
-        return 'Число должно быть целым и больше нуля.';
+        $result = 'Число должно быть целым и больше нуля.';
     }
 
-    return null;
+    return $result;
 }
 
 /**
@@ -279,18 +286,23 @@ function validateNumberFormat(string $number): string|null
  */
 function validateDateFormat(string $date): string|null
 {
-    if (!isDateValid($date, 'Y-m-d')) {
-        return 'Введите дату в формате "ГГГГ-ММ-ДД".';
+    $result = null;
+
+    switch (isDateValid($date, 'Y-m-d')) {
+        case true:
+            $endDate = date_create($date);
+            $currentDate = date_create();
+
+            if ($currentDate > $endDate) {
+                $result = 'Введите дату позже текущей хотя бы на один день.';
+            }
+            break;
+        case false :
+            $result = 'Введите дату в формате "ГГГГ-ММ-ДД".';
+            break;
     }
 
-    $endDate = date_create($date);
-    $currentDate = date_create();
-
-    if ($currentDate > $endDate) {
-        return 'Введите дату позже текущей хотя бы на один день.';
-    }
-
-    return null;
+    return $result;
 }
 
 /**
@@ -303,12 +315,13 @@ function validateDateFormat(string $date): string|null
  */
 function validateCategory(string $category, array $cats): string|null
 {
-    foreach ($cats as $catInfo) {
-        if (in_array($category, $catInfo)) {
-            return null;
-        }
+    $result = 'Выберете категорию из списка.';
+
+    if (array_any($cats, fn($catInfo) => in_array($category, $catInfo))) {
+        $result = null;
     }
-    return 'Выберете категорию из списка.';
+
+    return $result;
 }
 
 /**
@@ -322,15 +335,18 @@ function validateCategory(string $category, array $cats): string|null
  */
 function validateEmail(string $email, int $max): string|null
 {
-    if (mb_strlen($email, 'UTF-8') > $max) {
-        return 'Длина email не может превышать ' . $max . ' символов.';
+    $result = null;
+
+    switch (true) {
+        case mb_strlen($email, 'UTF-8') > $max:
+            $result = 'Длина email не может превышать ' . $max . ' символов.';
+            break;
+        case !filter_var($email, FILTER_VALIDATE_EMAIL):
+            $result = 'Введите email в корректном формате.';
+            break;
     }
 
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        return 'Введите email в корректном формате.';
-    }
-
-    return null;
+    return $result;
 }
 
 /**

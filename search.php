@@ -19,7 +19,8 @@ if (!$searchInfo['isTextValid'] && !$searchInfo['isCatValid']) {
     header('Location:/');
     exit();
 }
-if (!isset($config['pagination'], $config['pagination']['lots_per_page']) || (int)$config['pagination']['lots_per_page'] < 0) {
+if (!isset($config['pagination'], $config['pagination']['lots_per_page'])
+    || (int)$config['pagination']['lots_per_page'] < 0) {
     exit('Ошибка конфигурации pagination: ключ отсутствует или меньше нуля.');
 }
 

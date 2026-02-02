@@ -15,7 +15,11 @@
             <?php
             foreach ($bids as $bid) : ?>
                 <?php
-                if (isset($bid['date_exp'], $user['id'], $bid['img_url'], $bid['name'], $bid['lot_id'], $bid['contacts'], $bid['category'], $bid['amount'], $bid['created_at'])) : ?>
+                if (isset(
+                    $bid['date_exp'], $user['id'],
+                    $bid['img_url'], $bid['name'], $bid['lot_id'], $bid['contacts'],
+                    $bid['category'], $bid['amount'], $bid['created_at']
+                )) : ?>
                     <?php
                     [$hours, $minutes] = getDtRange($bid['date_exp'], new DateTime());
                     $isWinner = (int)$bid['winner_id'] === (int)$user['id'];
@@ -33,20 +37,23 @@
             ">
                         <td class="rates__info">
                             <div class="rates__img">
-                                <img src="<?= $bid['img_url']; ?>" width="54" height="40" alt="<?= $bid['name']; ?>">
+                                <img src="<?= htmlspecialchars($bid['img_url']); ?>" width="54" height="40"
+                                     alt="<?= htmlspecialchars($bid['name']); ?>">
                             </div>
                             <div>
                                 <h3 class="rates__title"><a
-                                        href="/lot.php?id=<?= $bid['lot_id']; ?>"><?= $bid['name']; ?></a></h3>
+                                        href="/lot.php?id=<?= htmlspecialchars(
+                                            $bid['lot_id']
+                                        ); ?>"><?= htmlspecialchars($bid['name']); ?></a></h3>
                                 <?php
                                 if ($isWinner) : ?>
-                                    <p><?= $bid['contacts']; ?></p>
+                                    <p><?= htmlspecialchars($bid['contacts']); ?></p>
                                 <?php
                                 endif; ?>
                             </div>
                         </td>
                         <td class="rates__category">
-                            <?= $bid['category']; ?>
+                            <?= htmlspecialchars($bid['category']); ?>
                         </td>
                         <td class="rates__timer">
                             <div class="timer

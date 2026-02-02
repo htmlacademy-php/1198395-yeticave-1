@@ -15,7 +15,8 @@
  */
 function getRecentLots(mysqli $connection): array
 {
-    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`img_url`, `lots`.`price`, `lots`.`date_exp`, `cats`.`name` AS `category` '
+    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`img_url`, `lots`.`price`, '
+        . '`lots`.`date_exp`, `cats`.`name` AS `category` '
         . 'FROM `lots` JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'WHERE `lots`.`date_exp` > CURDATE() '
         . 'AND `lots`.`winner_id` IS NULL '
@@ -62,7 +63,9 @@ function getAllCats(mysqli $connection): array
  */
 function getLotById(mysqli $connection, int $lotId): array|false
 {
-    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `lots`.`description`, `lots`.`winner_id`, `lots`.`bid_step`, `lots`.`user_id`, `cats`.`name` AS `category`, MAX(`bids`.`amount`) AS `max_price` '
+    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, '
+        . '`lots`.`description`, `lots`.`winner_id`, `lots`.`bid_step`, `lots`.`user_id`, `cats`.`name` AS `category`, '
+        . 'MAX(`bids`.`amount`) AS `max_price` '
         . 'FROM `lots` JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'LEFT JOIN `bids` ON `lots`.`id` = `bids`.`lot_id` '
         . 'WHERE `lots`.`id` = ' . $lotId . ' '
@@ -93,7 +96,8 @@ function getLotById(mysqli $connection, int $lotId): array|false
  */
 function getBidsByLot(mysqli $connection, int $lotId): array
 {
-    $query = 'SELECT `bids`.`user_id`, `bids`.`amount`, `bids`.`created_at`, `bids`.`lot_id`, `users`.`name` AS `user_name` FROM `bids` '
+    $query = 'SELECT `bids`.`user_id`, `bids`.`amount`, `bids`.`created_at`, `bids`.`lot_id`, '
+        . '`users`.`name` AS `user_name` FROM `bids` '
         . 'JOIN `users` ON `bids`.`user_id` = `users`.`id` WHERE `bids`.`lot_id` = ' . $lotId
         . ' ORDER BY `bids`.`created_at` DESC LIMIT 10';
 
@@ -129,16 +133,19 @@ function getData(mysqli $connection, string $query): array
  */
 function addLot(mysqli $connection, array $formInputs): int|false
 {
-    $query = 'INSERT INTO `lots` (`created_at`, `name`, `cat_id`, `description`, `price`, `bid_step`, `date_exp`, `img_url`, `user_id`) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
+    $result = false;
+
+    $query = 'INSERT INTO `lots` (`created_at`, `name`, `cat_id`, `description`, `price`, '
+        . '`bid_step`, `date_exp`, `img_url`, `user_id`) VALUES (NOW(), ?, ?, ?, ?, ?, ?, ?, ?)';
     $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
 
-    if (!mysqli_stmt_execute($stmt)) {
-        return false;
+    if (mysqli_stmt_execute($stmt)) {
+        $lotId = mysqli_insert_id($connection);
+        $lotId = (int)$lotId;
+        $result = $lotId > 0 ? $lotId : false;
     }
 
-    $lotId = mysqli_insert_id($connection);
-    $lotId = (int)$lotId;
-    return $lotId > 0 ? $lotId : false;
+    return $result;
 }
 
 /**
@@ -157,20 +164,17 @@ function addLot(mysqli $connection, array $formInputs): int|false
  */
 function getUser(mysqli $connection, string $email): array|false
 {
-    $query = 'SELECT `users`.`id`, `users`.`email`, `users`.`name`, `users`.`password`, `users`.`contacts` FROM `users` WHERE `users`.`email` = ?';
+    $result = false;
+
+    $query = 'SELECT `users`.`id`, `users`.`email`, `users`.`name`, `users`.`password`, '
+        . '`users`.`contacts` FROM `users` WHERE `users`.`email` = ?';
     $stmt = dbGetPrepareStmt($connection, $query, [$email]);
 
-    if (!mysqli_stmt_execute($stmt)) {
-        return false;
+    if (mysqli_stmt_execute($stmt) && $result = mysqli_stmt_get_result($stmt)) {
+        $result = mysqli_fetch_assoc($result) ?? false;
     }
 
-    $result = mysqli_stmt_get_result($stmt);
-
-    if (!$result) {
-        return false;
-    }
-
-    return mysqli_fetch_assoc($result) ?? false;
+    return $result;
 }
 
 /**
@@ -212,16 +216,18 @@ function isEmailUnique(mysqli $connection, string $email): bool
  */
 function addUser(mysqli $connection, array $formInputs): bool
 {
+    $result = false;
+
     $query = 'INSERT INTO `users` (`email`, `password`, `name`, `contacts`) VALUES (?, ?, ?, ?)';
 
-    if (!isset($formInputs['password'])) {
-        return false;
+    if (isset($formInputs['password'])) {
+        $formInputs['password'] = password_hash($formInputs['password'], PASSWORD_DEFAULT);
+
+        $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
+        $result = mysqli_stmt_execute($stmt);
     }
 
-    $formInputs['password'] = password_hash($formInputs['password'], PASSWORD_DEFAULT);
-
-    $stmt = dbGetPrepareStmt($connection, $query, $formInputs);
-    return mysqli_stmt_execute($stmt);
+    return $result;
 }
 
 /**
@@ -274,31 +280,77 @@ function dbGetPrepareStmt(mysqli $link, string $sql, array $data = []): mysqli_s
 }
 
 /**
- * Получает общее количество найденных активных лотов, подходящих под запрос.
+ * Получает количество страниц пагинации и "оффсет" для запроса искомой страницы пагинации.
  *
  * @param mysqli $connection Ресурс соединения.
  * @param string $searchQuery Запрос.
  * @param array $values Значение запроса.
+ * @param int $lotsPerPage Количество лотов на одной странице пагинации.
+ * @param int|false $page Искомая страница пагинации.
  *
- * @return int Количество лотов.
+ * @return array Ассоциативный массив:
+ * `pages` - общее число страниц пагинации;
+ * `offset` - сдвиг для запроса искомой страницы пагинации.
  */
-function getMatchedLotsCount(mysqli $connection, string $searchQuery, array $values): int
+function getPagesInfo(mysqli $connection, string $searchQuery, array $values, int $lotsPerPage, int|false $page): array
 {
-    $query = 'SELECT COUNT(`lots`.`id`) AS `amount` FROM `lots` WHERE ' . $searchQuery . ' AND `lots`.`date_exp` > CURDATE()';
+    $result =
+        [
+            'pages' => 1,
+            'offset' => 0,
+        ];
+
+    $query = 'SELECT COUNT(`lots`.`id`) AS `amount` FROM `lots` WHERE ' . $searchQuery
+        . ' AND `lots`.`date_exp` > CURDATE()';
 
     $stmt = dbGetPrepareStmt($connection, $query, $values);
 
-    if (!mysqli_stmt_execute($stmt) || !$result = mysqli_stmt_get_result($stmt)) {
-        return 0;
+    if (mysqli_stmt_execute($stmt) && $matchedLots = mysqli_stmt_get_result($stmt)) {
+        $lotsCount = mysqli_fetch_assoc($matchedLots);
+
+        $lotsCount = (int)($lotsCount['amount'] ?? 0);
+
+        $result['pages'] = (int)ceil($lotsCount / $lotsPerPage);
+
+        if (!$page || $page < 1 || $page > $result['pages']) {
+            $page = 1;
+        }
+
+        $result['offset'] = ($page - 1) * $lotsPerPage;
     }
 
-    $result = mysqli_fetch_assoc($result);
+    return $result;
+}
 
-    if (!isset($result['amount'])) {
-        return 0;
+/**
+ * Получает массив искомых лотов по запросу.
+ *
+ * @param mysqli $connection Ресурс соединения.
+ * @param string $searchQuery Запрос поиска.
+ * @param int $lotsPerPage Количество лотов на одной странице.
+ * @param int $offset Сдвиг для получения лотов на определенной странице пагинации.
+ * @param array $values Массив с данными поиска.
+ *
+ * @return array Массив с найденными лотами.
+ *
+ */
+function getSearchedLots(mysqli $connection, string $searchQuery, int $lotsPerPage, int $offset, array $values): array
+{
+    $result = [];
+
+    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, '
+        . '`cats`.`name` AS `category` FROM `lots`'
+        . ' JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` WHERE ' . $searchQuery
+        . ' AND `lots`.`date_exp` > CURDATE() AND `lots`.`winner_id` IS NULL ORDER BY `lots`.`created_at` DESC LIMIT '
+        . $lotsPerPage . ' OFFSET ' . $offset;
+
+    $stmt = dbGetPrepareStmt($connection, $query, $values);
+
+    if (mysqli_stmt_execute($stmt) && $lots = mysqli_stmt_get_result($stmt)) {
+        $result = mysqli_fetch_all($lots, MYSQLI_ASSOC);
     }
 
-    return (int)$result['amount'];
+    return $result;
 }
 
 /**
@@ -318,54 +370,40 @@ function search(mysqli $connection, array $searchInfo, int $lotsPerPage, int|fal
 
     $result =
         [
-            'pages' => 0,
+            'pages' => 1,
             'lots' => [],
         ];
 
-    if (!isset($searchInfo['isTextValid'], $searchInfo['isCatValid'], $searchInfo['catId'], $searchInfo['text'])) {
-        error_log('Отсутствуют необходимые ключи в массиве $searchInfo');
-        return $result;
-    }
+    if (isset($searchInfo['isTextValid'], $searchInfo['isCatValid'], $searchInfo['catId'], $searchInfo['text'])) {
+        switch (true) {
+            case $searchInfo['isTextValid'] && $searchInfo['isCatValid']:
+                $searchQuery = $catQuery . ' AND ' . $textQuery;
+                $values =
+                    [
+                        $searchInfo['catId'],
+                        $searchInfo['text'],
+                    ];
+                break;
+            case $searchInfo['isTextValid']:
+                $searchQuery = $textQuery;
+                $values = [$searchInfo['text']];
+                break;
+            case $searchInfo['isCatValid']:
+                $searchQuery = $catQuery;
+                $values = [$searchInfo['catId']];
+                break;
+            default:
+                $searchQuery = '';
+                $values = [];
+                break;
+        }
 
-    switch (true) {
-        case $searchInfo['isTextValid'] && $searchInfo['isCatValid']:
-            $searchQuery = $catQuery . ' AND ' . $textQuery;
-            $values =
-                [
-                    $searchInfo['catId'],
-                    $searchInfo['text'],
-                ];
-            break;
-        case $searchInfo['isTextValid']:
-            $searchQuery = $textQuery;
-            $values = [$searchInfo['text']];
-            break;
-        case $searchInfo['isCatValid']:
-            $searchQuery = $catQuery;
-            $values = [$searchInfo['catId']];
-            break;
-        default:
-            return $result;
-    }
+        $pagesInfo = getPagesInfo($connection, $searchQuery, $values, $lotsPerPage, $page);
 
-    $lotsCount = getMatchedLotsCount($connection, $searchQuery, $values);
+        $offset = $pagesInfo['offset'] ?? 0;
+        $result['pages'] = $pagesInfo['pages'] ?? 1;
 
-    $result['pages'] = (int)ceil($lotsCount / $lotsPerPage);
-
-    if (!$page || $page < 1 || $page > $result['pages']) {
-        $page = 1;
-    }
-
-    $offset = ($page - 1) * $lotsPerPage;
-    $query = 'SELECT `lots`.`id`, `lots`.`name`, `lots`.`price`, `lots`.`img_url`, `lots`.`date_exp`, `cats`.`name` AS `category` FROM `lots`'
-        . ' JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` WHERE ' . $searchQuery
-        . ' AND `lots`.`date_exp` > CURDATE() AND `lots`.`winner_id` IS NULL ORDER BY `lots`.`created_at` DESC LIMIT '
-        . $lotsPerPage . ' OFFSET ' . $offset;
-
-    $stmt = dbGetPrepareStmt($connection, $query, $values);
-
-    if (mysqli_stmt_execute($stmt) && $lots = mysqli_stmt_get_result($stmt)) {
-        $result['lots'] = mysqli_fetch_all($lots, MYSQLI_ASSOC);
+        $result['lots'] = getSearchedLots($connection, $searchQuery, $lotsPerPage, $offset, $values);
     }
 
     return $result;
@@ -396,7 +434,9 @@ function addBid(mysqli $connection, array $values): bool
  */
 function getUserBids(mysqli $connection, int $userId): array
 {
-    $query = 'SELECT `bids`.`id`, `bids`.`created_at`, `bids`.`amount`, `bids`.`user_id`, `bids`.`lot_id`, `lots`.`created_at` AS `lot_created`, `lots`.`name`, `lots`.`img_url`, `lots`.`date_exp`, `lots`.`winner_id`, `cats`.`name` AS `category`, `users`.`contacts` FROM `bids` '
+    $query = 'SELECT `bids`.`id`, `bids`.`created_at`, `bids`.`amount`, `bids`.`user_id`, `bids`.`lot_id`, '
+        . '`lots`.`created_at` AS `lot_created`, `lots`.`name`, `lots`.`img_url`, `lots`.`date_exp`, '
+        . '`lots`.`winner_id`, `cats`.`name` AS `category`, `users`.`contacts` FROM `bids` '
         . 'JOIN `lots` ON `lots`.`id` = `bids`.`lot_id` '
         . 'JOIN `cats` ON `lots`.`cat_id` = `cats`.`id` '
         . 'JOIN `users` ON `users`.`id` = `lots`.`user_id` WHERE `bids`.`user_id` = ' . $userId . ' '

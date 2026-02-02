@@ -14,7 +14,8 @@
     <div class="container">
         <section class="lots">
             <?php
-            if ($searchInfo['isCatValid'] && $searchInfo['isTextValid'] && isset($searchInfo['text'], $searchInfo['catId'], $searchInfo['catName'])) : ?>
+            if ($searchInfo['isCatValid'] && $searchInfo['isTextValid']
+                && isset($searchInfo['text'], $searchInfo['catId'], $searchInfo['catName'])) : ?>
                 <?php
                 $searchLink = '/search.php?search=' . htmlspecialchars(
                         $searchInfo['text']
@@ -31,7 +32,8 @@
             else : ?>
                 <?php
                 $searchLink = '/search.php?search=' . htmlspecialchars($searchInfo['text'] ?? ''); ?>
-                <h2>Результаты поиска по запросу «<span><?= htmlspecialchars($searchInfo['text'] ?? ''); ?></span>»</h2>
+                <h2>Результаты поиска по запросу «<span><?= htmlspecialchars($searchInfo['text'] ?? ''); ?>
+                    </span>»</h2>
             <?php
             endif; ?>
             <ul class="lots__list">
@@ -43,7 +45,10 @@
                     <?php
                     foreach ($lots as $lot) : ?>
                         <?php
-                        if (isset($lot['img_url'], $lot['name'], $lot['category'], $lot['id'], $lot['price'], $lot['date_exp'])) : ?>
+                        if (isset(
+                            $lot['img_url'], $lot['name'], $lot['category'],
+                            $lot['id'], $lot['price'], $lot['date_exp']
+                        )) : ?>
                             <li class="lots__item lot">
                                 <div class="lot__image">
                                     <img src="<?= htmlspecialchars($lot['img_url']); ?>" width="350" height="260"
@@ -53,10 +58,12 @@
                                 </div>
                                 <div class="lot__info">
                                     <span class="lot__category"><?= htmlspecialchars($lot['category']); ?></span>
-                                    <h3 class="lot__title"><a class="text-link"
-                                                              href="/lot.php?id=<?= $lot['id']; ?>"><?= htmlspecialchars(
+                                    <h3 class="lot__title">
+                                        <a class="text-link"
+                                           href="/lot.php?id=<?= htmlspecialchars($lot['id']); ?>"><?= htmlspecialchars(
                                                 $lot['name'],
-                                            ); ?></a></h3>
+                                            ); ?>
+                                        </a></h3>
                                     <div class="lot__state">
                                         <div class="lot__rate">
                                             <span class="lot__amount">Стартовая цена</span>
@@ -65,7 +72,8 @@
                                         <?php
                                         [$hours, $minutes] = getDtRange($lot['date_exp'], new DateTime()); ?>
                                         <div
-                                            class="<?= (int)$hours === 0 ? 'timer--finishing' : ''; ?> lot__timer timer">
+                                            class="<?= (int)$hours === 0
+                                                ? 'timer--finishing' : ''; ?> lot__timer timer">
                                             <?= $hours; ?>:<?= $minutes; ?>
                                         </div>
                                     </div>
